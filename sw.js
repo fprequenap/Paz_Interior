@@ -1,4 +1,4 @@
-const CACHE = 'paz-interior-v3';
+const CACHE = 'paz-interior-v4';
 
 self.addEventListener('install', e => {
   e.waitUntil(
@@ -8,8 +8,8 @@ self.addEventListener('install', e => {
         './index.html',
         './manifest.json',
         './apple-touch-icon.png',
-        './icons/icon-192.png',
-        './icons/icon-512.png',
+        './icon-192.png',
+        './icon-512.png',
       ]);
     })
   );
