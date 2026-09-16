@@ -358,7 +358,7 @@ localStorage.setItem('pi_jrs',JSON.stringify(S.jrs));render();}}
 try{const sr=localStorage.getItem('pi_res');if(sr)S.res=JSON.parse(sr);}catch(e){}
 
 // Register Service Worker
-if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js',{scope:'./'}).catch(()=>{});}
 
 // ═══ START ═══
 window.go=go;window.cL=cL;window.sP=sP;window.oM=oM;window.ans=ans;window.svJ=svJ;
