@@ -41,7 +41,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .opts{display:flex;flex-direction:column;gap:8px;margin-top:16px}
 .opt{display:flex;align-items:center;padding:12px;border-radius:10px;border:1.5px solid var(--border);background:var(--cardAlt);cursor:pointer}
 .opt:active{opacity:.85}
-.opt.on{border-color:currentColor;background:color-mix(in srgb,currentColor 8%,white)}
 .switch{width:50px;height:26px;border-radius:13px;border:none;cursor:pointer;position:relative;transition:background .2s}
 .switch .knob{position:absolute;top:3px;width:20px;height:20px;border-radius:10px;background:#FFF;transition:left .2s}
 textarea{width:100%;min-height:120px;border:1px solid var(--border);border-radius:8px;padding:12px;font-size:13px;color:var(--text);background:var(--cardAlt);resize:vertical;font-family:inherit}
@@ -58,31 +57,29 @@ textarea{width:100%;min-height:120px;border:1px solid var(--border);border-radiu
 .repbody{background:var(--cardAlt);border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px;padding:6px}
 .reprow{display:flex;align-items:center;gap:8px;padding:7px 4px;cursor:pointer}
 .repplay{width:28px;height:28px;border-radius:14px;display:flex;justify-content:center;align-items:center;color:#FFF;font-size:11px;flex-shrink:0}
-.platbtn{flex:1;padding:8px;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer}
+.platbtn{flex:1;padding:6px 4px;border-radius:8px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid var(--border)}
 .splash{display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:100dvh;background:#F0E8D8;text-align:center;padding:20px}
 .splash h1{font-size:26px;font-weight:700;color:var(--text);margin-top:8px;white-space:pre-line;line-height:1.3}
 .splash .line{width:60px;height:1px;background:var(--accentL);margin:12px 0;opacity:.5}
 .splash .sub{font-size:13px;color:#6B5B47;white-space:pre-line;line-height:1.5}
-.splash .motto{font-size:9px;color:var(--textMu);letter-spacing:3px;margin-top:12px}
-.splash .copy{font-size:8px;color:var(--textMu);margin-top:24px}
+.evobar{display:flex;align-items:flex-end;gap:2px;height:60px}
+.evobar div{flex:1;border-radius:2px 2px 0 0;min-width:8px;transition:height .3s}
+.improve{padding:8px 10px;border-radius:8px;margin-bottom:6px;border-left:3px solid}
 @media(prefers-color-scheme:dark){
-  :root{--bg:#1A1510;--card:#252016;--cardAlt:#1E1A13;--border:#3D3425;--borderL:#2E2820;--text:#E8DFD0;--textM:#C4A66A;--textL:#8B7355;--textMu:#6B5B47;--accent:#C4A66A;--accentL:#8B7355}
-  .splash{background:#1A1510}
+:root{--bg:#1A1510;--card:#252016;--cardAlt:#1E1A13;--border:#3D3425;--borderL:#2E2820;--text:#E8DFD0;--textM:#C4A66A;--textL:#8B7355;--textMu:#6B5B47;--accent:#C4A66A;--accentL:#8B7355}
+.splash{background:#1A1510}
 }
 </style>
 </head>
 <body>
 <div id="app"></div>
 <script>
-// ═══════════════════════════════════════════════════════════════
-// DATA
-// ═══════════════════════════════════════════════════════════════
+// ═══ DATA ═══
 const F=[
 {id:'soberbia',color:'#C0392B',angle:0},{id:'envidia',color:'#8E44AD',angle:51.43},
 {id:'ira',color:'#E67E22',angle:102.86},{id:'pereza',color:'#2C3E50',angle:154.29},
 {id:'avaricia',color:'#27AE60',angle:205.71},{id:'gula',color:'#D4A017',angle:257.14},
 {id:'lujuria',color:'#E74C3C',angle:308.57}];
-const CY=['soberbia','envidia','ira','pereza','avaricia','gula','lujuria'];
 const DM=[31,29,31,30,31,30,31,31,30,31,30,31];
 
 const MU={
@@ -94,190 +91,102 @@ avaricia:[{t:'Adagio for Strings',c:'Barber',d:'8:00'},{t:'Dona Nobis Pacem',c:'
 gula:[{t:'Suite No.1 BWV 1007',c:'Bach',d:'2:30'},{t:'Claro de Luna Mvt.1',c:'Beethoven',d:'6:00'},{t:'Danza de las Horas',c:'Ponchielli',d:'9:00'},{t:'Träumerei',c:'Schumann',d:'3:00'},{t:'Concierto piano No.21',c:'Mozart',d:'7:00'},{t:'Siesta de un fauno',c:'Debussy',d:'10:00'},{t:'Sarabande Suite No.5',c:'Bach',d:'4:30'},{t:'Rêverie Op.24',c:'Scriabin',d:'3:00'}],
 lujuria:[{t:'Sanctus Réquiem alemán',c:'Brahms',d:'5:00'},{t:'O Magnum Mysterium',c:'Lauridsen',d:'5:30'},{t:'Liebesträume No.3',c:'Liszt',d:'5:00'},{t:'Laudate Dominum K.339',c:'Mozart',d:'5:00'},{t:'Spem in Alium',c:'Tallis',d:'10:00'},{t:'In Paradisum',c:'Fauré',d:'3:30'},{t:'Pur ti miro',c:'Monteverdi',d:'5:00'},{t:'Vocalise Op.34',c:'Rachmaninov',d:'6:00'}]};
 
-// ═══════════════════════════════════════════════════════════════
-// i18n
-// ═══════════════════════════════════════════════════════════════
+// ═══ SEEDED WEEKLY SHUFFLE ═══
+function seedShuffle(weekNum,year){
+  let s=weekNum*7919+year*104729;
+  const rng=()=>{s=((s*16807)%2147483647);return(s&0x7fffffff)/0x7fffffff;};
+  const arr=[0,1,2,3,4,5,6];
+  for(let i=6;i>0;i--){const j=Math.floor(rng()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}
+  return arr;
+}
+function getFatigaForDate(d){
+  const jan1=new Date(d.getFullYear(),0,1);
+  const doy=Math.floor((d-jan1)/864e5);
+  const weekNum=Math.floor(doy/7);
+  const dayInWeek=doy%7;
+  const order=seedShuffle(weekNum,d.getFullYear());
+  return F[order[dayInWeek]];
+}
+function getWeekOrder(d){
+  const jan1=new Date(d.getFullYear(),0,1);
+  const doy=Math.floor((d-jan1)/864e5);
+  const weekNum=Math.floor(doy/7);
+  return seedShuffle(weekNum,d.getFullYear()).map(i=>F[i]);
+}
+
+// ═══ MUSIC FOR DAY ═══
+function getMusicForDate(d,fatId){
+  const jan1=new Date(d.getFullYear(),0,1);
+  const doy=Math.floor((d-jan1)/864e5);
+  const weekIdx=Math.floor(doy/7)%8;
+  return MU[fatId][weekIdx];
+}
+
+// ═══ i18n (compressed — ES/EN/FR/PT/IT/DE) ═══
 const LN=[{code:'es',flag:'🇪🇸'},{code:'en',flag:'🇬🇧'},{code:'fr',flag:'🇫🇷'},{code:'pt',flag:'🇧🇷'},{code:'it',flag:'🇮🇹'},{code:'de',flag:'🇩🇪'}];
 
 const I={
 es:{mo:['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'],
 sT:'Guía para la\nPaz Interior',sS:'Restauración de la armonía\nentre alma y cuerpo',sM:'ENTRE LA ACCIÓN Y LA CONTEMPLACIÓN',
 hT:'Tu Camino Hoy',vi:'Virtud',pc:'♪ PIEZA DEL DÍA',co:'CONTEMPLACIÓN',ac:'ACCIÓN DEL DÍA',dom:'FATIGA DOMINANTE',
-mTe:'Test de\nFatiga',mCa:'Calendario\nAnual',mGa:'Mis\nRelojes',mMu:'Repertorio\nMusical',mAl:'Alarma\nDiaria',mJo:'Diario\nPersonal',mTh:'Teoría',
+mTe:'Test de\nFatiga',mCa:'Calendario\nAnual',mGa:'Mis\nRelojes',mMu:'Repertorio\nMusical',mAl:'Alarma\nDiaria',mJo:'Diario\nPersonal',mTh:'Teoría',mHi:'Historial',
 q:'Pregunta',of:'de',ye:'Anhelo de',
 sc:[{l:'Muy débil',d:'Casi nunca'},{l:'Leve',d:'Pocas veces'},{l:'Moderada',d:'A veces'},{l:'Fuerte',d:'Con frecuencia'},{l:'Muy fuerte',d:'Constantemente'}],
 pa:'Panel de Instrumentos',ta:'⊙ TACÓMETROS',cp:'✦ ROSA DE VIENTOS',cf:'Contrafatiga',dT:'Realiza el test para ver tus resultados',st:'Iniciar Test',rp:'Repetir Test',
-zn:['VIRTUD','LEVE','MODERADA','ALTA'],cT:'🧘 Contemplación',aT:'⚡ Acción',dy:'Día',eo:'Fin de Mes — Test de Reajuste',eT:'Es momento de repetir el test.',rt:'Test de Reajuste',
+zn:['VIRTUD','LEVE','MODERADA','ALTA'],cT:'🧘 Contemplación',aT:'⚡ Acción',dy:'Día',eo:'Fin de Mes — Test de Reajuste',eT:'Es momento de repetir el test para medir tu progreso.',rt:'Test de Reajuste',
 al:'Alarma Diaria',re:'Configura tu recordatorio',da:'Recordatorio diario',to:'Tono: pieza del día',tD:'30 seg.',pv:'VISTA PREVIA',rf:'Tu reflexión del día',fa:'Fatiga',
 rT:'Repertorio Musical',rD:'56 piezas · 8 por fatiga',
 jo:'Diario Personal',yR:'TU REFLEXIÓN',pl:'Escribe tu reflexión del día...',sR:'Guardar Reflexión',pr:'ENTRADAS ANTERIORES',
-thT:'Fundamentos Teóricos',thH:'Los 7 Desórdenes de la Naturaleza Humana',thP:'Nuestra naturaleza está impulsada por anhelos que buscan el bien, la paz y el equilibrio interior. Cuando estos anhelos se desvirtúan, experimentamos una fatiga emocional que afecta mente y cuerpo.',
-meT:'Sistema de Medición',meP:'Cada fatiga se mide como un tacómetro de 0 a 5 con 4 zonas: Virtud (0-1.25), Leve (1.25-2.5), Moderada (2.5-3.75) y Alta (3.75-5). El test de 70 preguntas permite medir tu estado actual.',
+thT:'Fundamentos Teóricos',thH:'Los 7 Desórdenes de la Naturaleza Humana',
+thP:'Nuestra naturaleza está impulsada por anhelos que buscan el bien, la paz y el equilibrio interior. Cuando estos anhelos se desvirtúan, experimentamos una fatiga emocional que afecta mente y cuerpo.',
+meT:'Sistema de Medición',meP:'Cada fatiga se mide de 0 a 5 con 4 zonas: Virtud (0-1.25), Leve (1.25-2.5), Moderada (2.5-3.75) y Alta (3.75-5).',
 bk:'← Volver',ne:'AGUJA = DERIVA',vZ:'ZONA VIRTUD',hE:'La aguja roja señala el centro de gravedad de todas tus fatigas combinadas.',
+guideT:'Cómo utilizar esta Guía',
+guide:'1. <b>Inicia en cualquier momento</b> — No necesitas esperar un nuevo año.\n2. <b>Cada día</b> la app te presenta una fatiga a trabajar, una contemplación y tres acciones concretas alineadas con esa fatiga.\n3. <b>Escucha la pieza musical</b> asignada como acompañamiento contemplativo.\n4. <b>Escribe tu reflexión</b> en el Diario Personal.\n5. <b>Al final de cada mes</b>, realiza el Test de Reajuste (70 preguntas). Tus resultados se guardan automáticamente para ver tu evolución.\n6. <b>Consulta el Historial</b> para observar tu progreso mes a mes y las áreas de mejora.\n7. <b>Las acciones se repiten y varían</b> — la repetición crea hábitos; las variaciones abren nuevos caminos.\n8. <b>Cada semana</b> trabajas las 7 fatigas en un orden diferente, cubriendo todas sin repetir ninguna.',
+hiT:'Historial de Evolución',hiNone:'Aún no hay datos. Realiza tu primer test.',hiMonth:'Mes',hiAreas:'ÁREAS DE MEJORA',hiUp:'↑ Mejoró',hiDown:'↓ Empeoró',hiNew:'→ Nuevo',hiStable:'≈ Estable',
+wkT:'FATIGAS DE LA SEMANA',
 ft:{soberbia:{l:'Soberbia',a:'Abundancia',v:'Humildad'},envidia:{l:'Envidia',a:'Dignidad',v:'Amabilidad'},ira:{l:'Ira',a:'Justicia',v:'Paciencia'},pereza:{l:'Pereza',a:'Paz',v:'Diligencia'},avaricia:{l:'Avaricia',a:'Confianza',v:'Generosidad'},gula:{l:'Gula',a:'Bienestar',v:'Templanza'},lujuria:{l:'Lujuria',a:'Comunión',v:'Castidad'}},
 te:{soberbia:['¿Sueles sentir que mereces más que los demás?','¿Te resulta difícil aceptar críticas?','¿Crees que eres superior a la mayoría?','¿Te molesta no ser reconocido?','¿Te cuesta admitir errores?','¿Te irrita la falta de respeto?','¿Te cuesta aceptar limitaciones?','¿Tiendes a sobresalir para sentirte valioso?','¿Te molesta el éxito de otros?','¿Te cuesta compartir protagonismo?'],envidia:['¿Te comparas con los demás?','¿Te molesta el logro ajeno?','¿Te cuesta alegrarte por otros?','¿Sientes la vida injusta?','¿Deseas lo que otros poseen?','¿Sientes resentimiento?','¿Te cuesta celebrar logros ajenos?','¿Piensas que otros no merecen?','¿Sientes frustración ante la felicidad ajena?','¿Te sientes inferior?'],ira:['¿Te irritas con facilidad?','¿Reaccionas desproporcionadamente?','¿Te cuesta perdonar?','¿Sientes deseos de venganza?','¿Pierdes el control fácilmente?','¿Te cuesta mantener la calma?','¿Guardas rencor?','¿Te molestan las injusticias?','¿Explotas verbalmente?','¿La ira domina tus decisiones?'],pereza:['¿Pospones tareas importantes?','¿Te cuesta encontrar motivación?','¿Prefieres la comodidad?','¿Sientes indiferencia?','¿Evitas responsabilidades?','¿Te sientes apático?','¿Dejas para mañana?','¿Te cuesta ser constante?','¿Prefieres entretenimiento fácil?','¿Desperdicias tu tiempo?'],avaricia:['¿Te cuesta compartir?','¿Sientes ansiedad por perder bienes?','¿Acumulas innecesariamente?','¿Te cuesta ser generoso?','¿Piensas en adquirir más?','¿Sientes inseguridad sin control?','¿Te cuesta desprenderte?','¿Priorizas lo material?','¿Sientes que nunca es suficiente?','¿Te molesta gastar en otros?'],gula:['¿Buscas placer inmediato?','¿Te cuesta controlar impulsos?','¿Recurres a la comida como consuelo?','¿Excedes límites saludables?','¿Te cuesta la moderación?','¿Necesitas más para estar satisfecho?','¿Priorizas placer sobre bienestar?','¿Te cuesta decir no?','¿Sientes vacío que llenas con consumo?','¿Pierdes control en el consumo?'],lujuria:['¿Buscas satisfacción superficial?','¿Te cuesta mantener respeto?','¿Priorizas lo físico?','¿Objetivizas a las personas?','¿Te cuesta la fidelidad emocional?','¿Buscas nuevas sensaciones?','¿Te cuesta comprometerte?','¿Confundes deseo con amor?','¿Sientes vacío tras lo superficial?','¿Te cuesta ver más allá de lo físico?']},
-dl:{1:{c:'La gratitud es la memoria del corazón.',au:'Massillon',a:['Escribe tres cosas por las que estés agradecido.','Haz una acción desinteresada.','Escucha sin imponer tu opinión.']},2:{c:'La humildad no es pensar menos de ti, es pensar menos en ti.',au:'C.S. Lewis',a:['Reconoce los logros de los demás.','Escribe 3 cosas logradas esta semana.','Ayuda sin esperar reconocimiento.']},3:{c:'La paciencia es la fortaleza del alma.',a:['Cuenta hasta 10 antes de responder.','Identifica algo pendiente de perdonar.','Practica una respuesta serena.']},4:{c:'La generosidad nace de la confianza interior.',a:['Comparte sin esperar nada a cambio.','Da algo que acumulas.','Invierte tiempo en alguien.']},5:{c:'El dominio propio es la mayor de las victorias.',au:'Platón',a:['Practica moderación en un hábito.','Sustituye un placer inmediato.','Ayuna de algo superfluo.']},6:{c:'La verdadera comunión trasciende lo físico.',a:['Escucha profundamente a alguien cercano.','¿Priorizas la conexión emocional?','Acto de caridad basado en confianza.']},7:{c:'La diligencia transforma la intención en realidad.',a:['Completa una tarea postergada.','Establece horario para 3 horas.','30 minutos a algo difícil pero necesario.']}}},
+// Daily content keyed by fatigue id — contemplation + 3 actions aligned with each fatigue
+dc:{soberbia:{c:'La gratitud es la memoria del corazón. — Massillon',a:['Escribe tres cosas por las que estés agradecido hoy.','Realiza un acto de generosidad sin esperar nada a cambio.','Escucha activamente sin imponer tu opinión ni destacar logros.']},envidia:{c:'La humildad no es pensar menos de ti, es pensar menos en ti. — C.S. Lewis',a:['Felicita sinceramente a alguien por sus éxitos o méritos.','Escribe 3 cosas que has logrado tú esta semana.','Ayuda en el proyecto de otra persona sin esperar reconocimiento.']},ira:{c:'La paciencia es la fortaleza del alma.',a:['Antes de responder en un conflicto, respira y cuenta hasta diez.','Identifica una situación pendiente de perdonar y perdona.','Practica una respuesta serena ante algo que te frustra.']},pereza:{c:'El que se levanta cada mañana dispuesto a mejorar nunca se queda atrás. — San Juan Bosco',a:['Completa hoy una tarea que llevas postergando.','Establece intervalos de 25 min de trabajo concentrado.','Haz una lista de 3 tareas concretas y cúmplelas.']},avaricia:{c:'Las manos que dan son más santas que los labios que rezan. — Santa Teresa de Calcuta',a:['Haz una donación de algo material o de tu tiempo.','Practica el agradecimiento consciente por lo que ya tienes.','Comparte un logro personal con alguien y celebra juntos.']},gula:{c:'La templanza es la virtud que nos enseña a disfrutar sin caer en el exceso. — Tomás de Aquino',a:['Come con moderación y consciencia, saboreando cada bocado.','Dedica tiempo a ejercitarte para equilibrar cuerpo y mente.','Agradece por tu salud y recursos de bienestar.']},lujuria:{c:'La verdadera comunión trasciende lo físico.',a:['Dedica tiempo a escuchar profundamente a alguien cercano.','Reflexiona: ¿priorizas la conexión emocional en tus relaciones?','Realiza un acto de caridad centrado en la confianza y el respeto.']}}},
 
-en:{mo:['January','February','March','April','May','June','July','August','September','October','November','December'],sT:'Guide to\nInner Peace',sS:'Restoring harmony\nbetween soul and body',sM:'BETWEEN ACTION AND CONTEMPLATION',hT:'Your Path Today',vi:'Virtue',pc:'♪ PIECE OF THE DAY',co:'CONTEMPLATION',ac:'ACTION OF THE DAY',dom:'DOMINANT FATIGUE',mTe:'Fatigue\nTest',mCa:'Annual\nCalendar',mGa:'My\nGauges',mMu:'Musical\nRepertoire',mAl:'Daily\nAlarm',mJo:'Personal\nJournal',mTh:'Theory',q:'Question',of:'of',ye:'Yearning for',sc:[{l:'Very weak',d:'Almost never'},{l:'Mild',d:'Rarely'},{l:'Moderate',d:'Sometimes'},{l:'Strong',d:'Often'},{l:'Very strong',d:'Constantly'}],pa:'Instrument Panel',ta:'⊙ TACHOMETERS',cp:'✦ COMPASS ROSE',cf:'Counter-fatigue',dT:'Take the test to see your results',st:'Start Test',rp:'Repeat Test',zn:['VIRTUE','MILD','MODERATE','HIGH'],cT:'🧘 Contemplation',aT:'⚡ Action',dy:'Day',eo:'End of Month — Reset Test',eT:'Time to retake the test.',rt:'Reset Test',al:'Daily Alarm',re:'Set your daily reminder',da:'Daily reminder',to:'Tone: piece of the day',tD:'30 sec.',pv:'PREVIEW',rf:'Your daily reflection',fa:'Fatigue',rT:'Musical Repertoire',rD:'56 pieces · 8 per fatigue',jo:'Personal Journal',yR:'YOUR REFLECTION',pl:'Write your reflection...',sR:'Save Reflection',pr:'PREVIOUS ENTRIES',thT:'Theoretical Foundations',thH:'The 7 Disorders of Human Nature',thP:'Our nature is driven by yearnings that seek good, peace and inner balance. When distorted, we experience emotional fatigue affecting mind and body.',meT:'Measurement System',meP:'Each fatigue is measured 0-5 with 4 zones: Virtue (0-1.25), Mild (1.25-2.5), Moderate (2.5-3.75) and High (3.75-5).',bk:'← Back',ne:'NEEDLE = DRIFT',vZ:'VIRTUE ZONE',hE:'The red needle points to the center of gravity of all your combined fatigues.',
-ft:{soberbia:{l:'Pride',a:'Abundance',v:'Humility'},envidia:{l:'Envy',a:'Dignity',v:'Kindness'},ira:{l:'Wrath',a:'Justice',v:'Patience'},pereza:{l:'Sloth',a:'Peace',v:'Diligence'},avaricia:{l:'Greed',a:'Trust',v:'Generosity'},gula:{l:'Gluttony',a:'Wellbeing',v:'Temperance'},lujuria:{l:'Lust',a:'Communion',v:'Chastity'}},
-te:{soberbia:['Do you feel you deserve more?','Hard to accept criticism?','Believe you\'re superior?','Lack of recognition bothers you?','Hard to admit mistakes?','Disrespect irritates you?','Hard to accept limitations?','Excel to feel worthy?','Others\' success bothers you?','Hard to share spotlight?'],envidia:['Compare yourself constantly?','Others\' success bothers you?','Hard to be happy for others?','Life feels unfair?','Desire what others have?','Resent successful people?','Hard to celebrate others?','Others don\'t deserve it?','Frustrated by others\' happiness?','Feel inferior?'],ira:['Get irritated easily?','Overreact?','Hard to forgive?','Desire revenge?','Lose control easily?','Hard to stay calm?','Hold grudges?','Injustice deeply bothers you?','Explode verbally?','Anger controls decisions?'],pereza:['Postpone tasks?','Hard to find motivation?','Prefer comfort?','Feel indifferent?','Avoid effort?','Feel apathetic?','Leave for tomorrow?','Hard to be consistent?','Prefer easy entertainment?','Waste time?'],avaricia:['Hard to share?','Anxiety about loss?','Hoard unnecessarily?','Hard to be generous?','Think about acquiring more?','Insecure without control?','Hard to let go?','Material over relationships?','Never enough?','Uncomfortable spending on others?'],gula:['Seek immediate pleasure?','Hard to control impulses?','Food as comfort?','Exceed healthy limits?','Hard to moderate?','Need more to be satisfied?','Pleasure over wellbeing?','Hard to say no?','Fill emptiness with consumption?','Lose control?'],lujuria:['Seek superficial satisfaction?','Hard to maintain respect?','Prioritize physical?','Objectify people?','Hard to be faithful?','Seek new sensations?','Hard to commit?','Confuse desire with love?','Empty after superficial?','Hard to see beyond physical?']},
-dl:{1:{c:'Gratitude is the memory of the heart.',au:'Massillon',a:['Write three things you\'re grateful for.','Do a selfless act.','Listen without imposing.']},2:{c:'Humility is thinking less about yourself.',au:'C.S. Lewis',a:['Acknowledge others\' achievements.','Write 3 accomplishments.','Help without expecting recognition.']},3:{c:'Patience is the strength of the soul.',a:['Count to 10 before responding.','Identify something to forgive.','Practice a calm response.']},4:{c:'Generosity is born from inner trust.',a:['Share without expecting return.','Give something you hoard.','Invest time in someone.']},5:{c:'Self-mastery is the greatest victory.',au:'Plato',a:['Practice moderation.','Replace immediate pleasure.','Fast from something superfluous.']},6:{c:'True communion transcends the physical.',a:['Listen deeply.','Prioritize emotional connection.','Act of charity based on trust.']},7:{c:'Diligence transforms intention into reality.',a:['Complete a postponed task.','Set a 3-hour schedule.','30 minutes on something hard.']}}},
+en:{mo:['January','February','March','April','May','June','July','August','September','October','November','December'],sT:'Guide to\nInner Peace',sS:'Restoring harmony\nbetween soul and body',sM:'BETWEEN ACTION AND CONTEMPLATION',hT:'Your Path Today',vi:'Virtue',pc:'♪ PIECE OF THE DAY',co:'CONTEMPLATION',ac:'ACTION OF THE DAY',dom:'DOMINANT FATIGUE',mTe:'Fatigue\nTest',mCa:'Annual\nCalendar',mGa:'My\nGauges',mMu:'Musical\nRepertoire',mAl:'Daily\nAlarm',mJo:'Personal\nJournal',mTh:'Theory',mHi:'History',q:'Question',of:'of',ye:'Yearning for',sc:[{l:'Very weak',d:'Almost never'},{l:'Mild',d:'Rarely'},{l:'Moderate',d:'Sometimes'},{l:'Strong',d:'Often'},{l:'Very strong',d:'Constantly'}],pa:'Instrument Panel',ta:'⊙ TACHOMETERS',cp:'✦ COMPASS ROSE',cf:'Counter-fatigue',dT:'Take the test to see your results',st:'Start Test',rp:'Repeat Test',zn:['VIRTUE','MILD','MODERATE','HIGH'],cT:'🧘 Contemplation',aT:'⚡ Action',dy:'Day',eo:'End of Month — Reset Test',eT:'Time to retake the test.',rt:'Reset Test',al:'Daily Alarm',re:'Set your daily reminder',da:'Daily reminder',to:'Tone: piece of the day',tD:'30 sec.',pv:'PREVIEW',rf:'Your daily reflection',fa:'Fatigue',rT:'Musical Repertoire',rD:'56 pieces · 8 per fatigue',jo:'Personal Journal',yR:'YOUR REFLECTION',pl:'Write your reflection...',sR:'Save Reflection',pr:'PREVIOUS ENTRIES',thT:'Theoretical Foundations',thH:'The 7 Disorders of Human Nature',thP:'Our nature is driven by yearnings that seek good, peace and inner balance. When distorted, we experience emotional fatigue affecting mind and body.',meT:'Measurement System',meP:'Each fatigue is measured 0-5 with 4 zones: Virtue (0-1.25), Mild (1.25-2.5), Moderate (2.5-3.75) and High (3.75-5).',bk:'← Back',ne:'NEEDLE = DRIFT',vZ:'VIRTUE ZONE',hE:'The red needle points to the center of gravity of all your combined fatigues.',guideT:'How to Use This Guide',guide:'1. <b>Start anytime</b> — No need to wait for a new year.\n2. <b>Each day</b> the app presents a fatigue to work on, a contemplation and three actions aligned with it.\n3. <b>Listen to the musical piece</b> assigned as contemplative accompaniment.\n4. <b>Write your reflection</b> in the Personal Journal.\n5. <b>At the end of each month</b>, take the Reset Test (70 questions). Results are saved automatically.\n6. <b>Check the History</b> to track your monthly progress and improvement areas.\n7. <b>Actions repeat and vary</b> — repetition builds habits; variations open new paths.\n8. <b>Each week</b> you work all 7 fatigues in a different order, covering all without repeating any.',hiT:'Evolution History',hiNone:'No data yet. Take your first test.',hiMonth:'Month',hiAreas:'IMPROVEMENT AREAS',hiUp:'↑ Improved',hiDown:'↓ Worsened',hiNew:'→ New',hiStable:'≈ Stable',wkT:'THIS WEEK\'S FATIGUES',ft:{soberbia:{l:'Pride',a:'Abundance',v:'Humility'},envidia:{l:'Envy',a:'Dignity',v:'Kindness'},ira:{l:'Wrath',a:'Justice',v:'Patience'},pereza:{l:'Sloth',a:'Peace',v:'Diligence'},avaricia:{l:'Greed',a:'Trust',v:'Generosity'},gula:{l:'Gluttony',a:'Wellbeing',v:'Temperance'},lujuria:{l:'Lust',a:'Communion',v:'Chastity'}},te:{soberbia:['Feel you deserve more?','Hard to accept criticism?','Believe you\'re superior?','Lack of recognition?','Hard to admit mistakes?','Disrespect irritates?','Hard to accept limitations?','Excel to feel worthy?','Others\' success bothers?','Hard to share spotlight?'],envidia:['Compare constantly?','Others\' success bothers?','Hard to be happy for others?','Life feels unfair?','Desire what others have?','Resent successful people?','Hard to celebrate others?','Others don\'t deserve it?','Frustrated by happiness?','Feel inferior?'],ira:['Get irritated easily?','Overreact?','Hard to forgive?','Desire revenge?','Lose control?','Hard to stay calm?','Hold grudges?','Injustice bothers deeply?','Explode verbally?','Anger controls decisions?'],pereza:['Postpone tasks?','Hard to find motivation?','Prefer comfort?','Feel indifferent?','Avoid effort?','Feel apathetic?','Leave for tomorrow?','Hard to be consistent?','Prefer easy entertainment?','Waste time?'],avaricia:['Hard to share?','Anxiety about loss?','Hoard unnecessarily?','Hard to be generous?','Think about more?','Insecure without control?','Hard to let go?','Material over relationships?','Never enough?','Uncomfortable spending?'],gula:['Seek immediate pleasure?','Hard to control impulses?','Food as comfort?','Exceed limits?','Hard to moderate?','Need more?','Pleasure over wellbeing?','Hard to say no?','Fill emptiness?','Lose control?'],lujuria:['Seek superficial satisfaction?','Hard to maintain respect?','Prioritize physical?','Objectify people?','Hard to be faithful?','Seek sensations?','Hard to commit?','Confuse desire with love?','Empty after?','Beyond physical?']},dc:{soberbia:{c:'Gratitude is the memory of the heart. — Massillon',a:['Write three things you\'re grateful for today.','Do a selfless act expecting nothing in return.','Listen actively without imposing your opinion.']},envidia:{c:'Humility is thinking less about yourself. — C.S. Lewis',a:['Sincerely congratulate someone on their success.','Write 3 things you achieved this week.','Help on someone else\'s project without expecting recognition.']},ira:{c:'Patience is the strength of the soul.',a:['Before responding to conflict, breathe and count to ten.','Identify a situation you need to forgive and forgive.','Practice a calm response to something frustrating.']},pereza:{c:'Those who rise each morning willing to improve never fall behind. — St. John Bosco',a:['Complete a task you\'ve been postponing.','Set 25-minute focused work intervals.','Make a list of 3 concrete tasks and do them.']},avaricia:{c:'Giving hands are holier than praying lips. — St. Teresa of Calcutta',a:['Donate something material or your time.','Practice conscious gratitude for what you have.','Share a personal achievement and celebrate together.']},gula:{c:'Temperance teaches us to enjoy without excess. — Thomas Aquinas',a:['Eat with moderation and awareness, savoring each bite.','Exercise to balance body and mind.','Be grateful for your health and wellbeing.']},lujuria:{c:'True communion transcends the physical.',a:['Dedicate time to deeply listen to someone close.','Reflect: do you prioritize emotional connection?','Perform an act of charity centered on trust and respect.']}}},
 
-fr:{mo:['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'],sT:'Guide pour la\nPaix Intérieure',sS:'Restauration de l\'harmonie\nentre l\'âme et le corps',sM:'ENTRE L\'ACTION ET LA CONTEMPLATION',hT:'Ton Chemin Aujourd\'hui',vi:'Vertu',pc:'♪ PIÈCE DU JOUR',co:'CONTEMPLATION',ac:'ACTION DU JOUR',dom:'FATIGUE DOMINANTE',mTe:'Test de\nFatigue',mCa:'Calendrier\nAnnuel',mGa:'Mes\nJauges',mMu:'Répertoire\nMusical',mAl:'Alarme\nQuotidienne',mJo:'Journal\nPersonnel',mTh:'Théorie',q:'Question',of:'de',ye:'Aspiration à',sc:[{l:'Très faible',d:'Presque jamais'},{l:'Léger',d:'Rarement'},{l:'Modéré',d:'Parfois'},{l:'Fort',d:'Souvent'},{l:'Très fort',d:'Constamment'}],pa:'Tableau de Bord',ta:'⊙ TACHYMÈTRES',cp:'✦ ROSE DES VENTS',cf:'Contre-fatigue',dT:'Passez le test',st:'Commencer',rp:'Refaire le Test',zn:['VERTU','LÉGER','MODÉRÉ','ÉLEVÉ'],cT:'🧘 Contemplation',aT:'⚡ Action',dy:'Jour',eo:'Fin du Mois',eT:'Refaites le test.',rt:'Réajustement',al:'Alarme Quotidienne',re:'Configurez votre rappel',da:'Rappel quotidien',to:'Pièce du jour',tD:'30 sec.',pv:'APERÇU',rf:'Votre réflexion',fa:'Fatigue',rT:'Répertoire Musical',rD:'56 pièces · 8 par fatigue',jo:'Journal Personnel',yR:'VOTRE RÉFLEXION',pl:'Écrivez votre réflexion...',sR:'Enregistrer',pr:'ENTRÉES PRÉCÉDENTES',thT:'Fondements Théoriques',thH:'Les 7 Désordres de la Nature Humaine',thP:'Notre nature est animée par des aspirations qui cherchent le bien et la paix intérieure. Quand elles se dénaturent, nous éprouvons une fatigue émotionnelle.',meT:'Système de Mesure',meP:'Chaque fatigue est mesurée de 0 à 5 avec 4 zones.',bk:'← Retour',ne:'AIGUILLE = DÉRIVE',vZ:'ZONE VERTU',hE:'L\'aiguille rouge pointe vers le centre de gravité de toutes vos fatigues.',
-ft:{soberbia:{l:'Orgueil',a:'Abondance',v:'Humilité'},envidia:{l:'Envie',a:'Dignité',v:'Bienveillance'},ira:{l:'Colère',a:'Justice',v:'Patience'},pereza:{l:'Paresse',a:'Paix',v:'Diligence'},avaricia:{l:'Avarice',a:'Confiance',v:'Générosité'},gula:{l:'Gourmandise',a:'Bien-être',v:'Tempérance'},lujuria:{l:'Luxure',a:'Communion',v:'Chasteté'}},
-te:{soberbia:['Méritez-vous plus que les autres?','Acceptez-vous les critiques?','Êtes-vous supérieur?','Le manque de reconnaissance?','Admettre vos erreurs?','Le manque de respect?','Accepter vos limites?','Exceller pour vous valoriser?','Le succès des autres?','Partager la vedette?'],envidia:['Vous comparez-vous?','Le succès des autres?','Vous réjouir pour eux?','La vie est injuste?','Désirez-vous ce qu\'ont les autres?','Ressentiment?','Célébrer les autres?','Les autres méritent-ils?','Frustration?','Inférieur?'],ira:['Facilement irritable?','Réaction disproportionnée?','Pardonner?','Désirs de vengeance?','Perdre le contrôle?','Rester calme?','Rancune?','Injustices?','Explosions verbales?','Colère dominante?'],pereza:['Reporter les tâches?','Motivation?','Confort vs effort?','Indifférence?','Éviter?','Apathie?','Demain?','Constance?','Divertissement facile?','Gaspiller le temps?'],avaricia:['Partager?','Anxiété de perte?','Accumuler?','Générosité?','Acquérir plus?','Insécurité?','Se séparer?','Matériel vs relations?','Jamais assez?','Dépenser pour les autres?'],gula:['Plaisir immédiat?','Contrôler les impulsions?','Nourriture-réconfort?','Limites saines?','Modération?','Toujours plus?','Plaisir vs bien-être?','Dire non?','Vide à combler?','Contrôle?'],lujuria:['Satisfaction superficielle?','Respect?','Physique vs émotionnel?','Objectifier?','Fidélité?','Nouvelles sensations?','Engagement?','Désir vs amour?','Vide après?','Au-delà du physique?']},
-dl:{1:{c:'La gratitude est la mémoire du cœur.',au:'Massillon',a:['Trois choses pour être reconnaissant.','Un acte désintéressé.','Écouter sans imposer.']},2:{c:'L\'humilité, c\'est penser moins à soi.',au:'C.S. Lewis',a:['Reconnaître les réalisations.','Écrire 3 accomplissements.','Aider sans attendre.']},3:{c:'La patience est la force de l\'âme.',a:['Compter jusqu\'à 10.','Pardonner.','Réponse calme.']},4:{c:'La générosité naît de la confiance.',a:['Partager.','Donner.','Investir du temps.']},5:{c:'La maîtrise de soi est la plus grande victoire.',au:'Platon',a:['Modération.','Remplacer un plaisir.','Jeûner.']},6:{c:'La vraie communion transcende le physique.',a:['Écouter profondément.','Connexion émotionnelle.','Charité.']},7:{c:'La diligence transforme l\'intention en réalité.',a:['Tâche reportée.','Emploi du temps.','30 min difficiles.']}}},
+fr:{mo:['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'],sT:'Guide pour la\nPaix Intérieure',sS:'Restauration de l\'harmonie\nentre l\'âme et le corps',sM:'ENTRE L\'ACTION ET LA CONTEMPLATION',hT:'Ton Chemin Aujourd\'hui',vi:'Vertu',pc:'♪ PIÈCE DU JOUR',co:'CONTEMPLATION',ac:'ACTION DU JOUR',dom:'FATIGUE DOMINANTE',mTe:'Test de\nFatigue',mCa:'Calendrier\nAnnuel',mGa:'Mes\nJauges',mMu:'Répertoire\nMusical',mAl:'Alarme',mJo:'Journal\nPersonnel',mTh:'Théorie',mHi:'Historique',q:'Question',of:'de',ye:'Aspiration à',sc:[{l:'Très faible',d:'Presque jamais'},{l:'Léger',d:'Rarement'},{l:'Modéré',d:'Parfois'},{l:'Fort',d:'Souvent'},{l:'Très fort',d:'Constamment'}],pa:'Tableau de Bord',ta:'⊙ TACHYMÈTRES',cp:'✦ ROSE DES VENTS',cf:'Contre-fatigue',dT:'Passez le test',st:'Commencer',rp:'Refaire',zn:['VERTU','LÉGER','MODÉRÉ','ÉLEVÉ'],cT:'🧘 Contemplation',aT:'⚡ Action',dy:'Jour',eo:'Fin du Mois',eT:'Refaites le test.',rt:'Réajustement',al:'Alarme',re:'Rappel',da:'Rappel quotidien',to:'Pièce du jour',tD:'30 sec.',pv:'APERÇU',rf:'Votre réflexion',fa:'Fatigue',rT:'Répertoire Musical',rD:'56 pièces · 8 par fatigue',jo:'Journal Personnel',yR:'VOTRE RÉFLEXION',pl:'Écrivez...',sR:'Enregistrer',pr:'PRÉCÉDENTES',thT:'Fondements Théoriques',thH:'Les 7 Désordres',thP:'Notre nature cherche le bien et la paix. Quand elle dévie, nous éprouvons une fatigue émotionnelle.',meT:'Mesure',meP:'Chaque fatigue: 0 à 5, 4 zones.',bk:'← Retour',ne:'AIGUILLE = DÉRIVE',vZ:'ZONE VERTU',hE:'L\'aiguille pointe vers le centre de gravité.',guideT:'Comment Utiliser ce Guide',guide:'1. <b>Commencez quand vous voulez.</b>\n2. <b>Chaque jour</b>: fatigue, contemplation, 3 actions.\n3. <b>Écoutez la pièce musicale.</b>\n4. <b>Écrivez votre réflexion.</b>\n5. <b>Fin de mois</b>: refaites le test.\n6. <b>Consultez l\'historique.</b>\n7. <b>Répétition + variation = habitudes.</b>\n8. <b>7 fatigues par semaine, ordre aléatoire.</b>',hiT:'Historique',hiNone:'Pas encore de données.',hiMonth:'Mois',hiAreas:'À AMÉLIORER',hiUp:'↑ Amélioré',hiDown:'↓ Détérioré',hiNew:'→ Nouveau',hiStable:'≈ Stable',wkT:'FATIGUES DE LA SEMAINE',ft:{soberbia:{l:'Orgueil',a:'Abondance',v:'Humilité'},envidia:{l:'Envie',a:'Dignité',v:'Bienveillance'},ira:{l:'Colère',a:'Justice',v:'Patience'},pereza:{l:'Paresse',a:'Paix',v:'Diligence'},avaricia:{l:'Avarice',a:'Confiance',v:'Générosité'},gula:{l:'Gourmandise',a:'Bien-être',v:'Tempérance'},lujuria:{l:'Luxure',a:'Communion',v:'Chasteté'}},te:{soberbia:['Méritez-vous plus?','Critiques?','Supérieur?','Reconnaissance?','Erreurs?','Respect?','Limites?','Exceller?','Succès des autres?','Vedette?'],envidia:['Comparez-vous?','Succès?','Joie?','Injuste?','Désir?','Ressentiment?','Célébrer?','Méritent?','Frustration?','Inférieur?'],ira:['Irritable?','Disproportionné?','Pardonner?','Vengeance?','Contrôle?','Calme?','Rancune?','Injustices?','Explosions?','Colère domine?'],pereza:['Reporter?','Motivation?','Confort?','Indifférence?','Éviter?','Apathie?','Demain?','Constance?','Divertissement?','Temps?'],avaricia:['Partager?','Anxiété?','Accumuler?','Généreux?','Plus?','Insécurité?','Séparer?','Matériel?','Assez?','Dépenser?'],gula:['Plaisir?','Impulsions?','Réconfort?','Limites?','Modération?','Plus?','Bien-être?','Non?','Vide?','Contrôle?'],lujuria:['Superficiel?','Respect?','Physique?','Objectifier?','Fidélité?','Sensations?','Engagement?','Amour?','Vide?','Au-delà?']},dc:{soberbia:{c:'La gratitude est la mémoire du cœur. — Massillon',a:['Trois choses pour être reconnaissant.','Acte désintéressé.','Écouter sans imposer.']},envidia:{c:'L\'humilité, c\'est penser moins à soi. — C.S. Lewis',a:['Féliciter sincèrement.','3 accomplissements.','Aider sans attendre.']},ira:{c:'La patience est la force de l\'âme.',a:['Compter jusqu\'à 10.','Pardonner.','Réponse calme.']},pereza:{c:'La diligence transforme l\'intention. ',a:['Tâche reportée.','Intervalles de 25 min.','3 tâches concrètes.']},avaricia:{c:'Les mains qui donnent sont plus saintes. — Mère Teresa',a:['Donner.','Gratitude consciente.','Partager un succès.']},gula:{c:'La tempérance enseigne à jouir sans excès. — Thomas d\'Aquin',a:['Manger avec modération.','Exercice.','Gratitude santé.']},lujuria:{c:'La vraie communion transcende le physique.',a:['Écouter profondément.','Connexion émotionnelle.','Charité.']}}},
 
-pt:{mo:['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'],sT:'Guia para a\nPaz Interior',sS:'Restauração da harmonia\nentre alma e corpo',sM:'ENTRE A AÇÃO E A CONTEMPLAÇÃO',hT:'Seu Caminho Hoje',vi:'Virtude',pc:'♪ PEÇA DO DIA',co:'CONTEMPLAÇÃO',ac:'AÇÃO DO DIA',dom:'FADIGA DOMINANTE',mTe:'Teste de\nFadiga',mCa:'Calendário\nAnual',mGa:'Meus\nMedidores',mMu:'Repertório\nMusical',mAl:'Alarme\nDiário',mJo:'Diário\nPessoal',mTh:'Teoria',q:'Pergunta',of:'de',ye:'Anseio de',sc:[{l:'Muito fraco',d:'Quase nunca'},{l:'Leve',d:'Raramente'},{l:'Moderado',d:'Às vezes'},{l:'Forte',d:'Frequentemente'},{l:'Muito forte',d:'Constantemente'}],pa:'Painel de Instrumentos',ta:'⊙ TACÔMETROS',cp:'✦ ROSA DOS VENTOS',cf:'Contra-fadiga',dT:'Faça o teste',st:'Iniciar',rp:'Repetir Teste',zn:['VIRTUDE','LEVE','MODERADO','ALTO'],cT:'🧘 Contemplação',aT:'⚡ Ação',dy:'Dia',eo:'Fim do Mês',eT:'Refaça o teste.',rt:'Reajuste',al:'Alarme Diário',re:'Configure seu lembrete',da:'Lembrete diário',to:'Peça do dia',tD:'30 seg.',pv:'PRÉ-VIS.',rf:'Sua reflexão',fa:'Fadiga',rT:'Repertório Musical',rD:'56 peças · 8 por fadiga',jo:'Diário Pessoal',yR:'SUA REFLEXÃO',pl:'Escreva sua reflexão...',sR:'Salvar',pr:'ANTERIORES',thT:'Fundamentos Teóricos',thH:'As 7 Desordens da Natureza Humana',thP:'Nossa natureza é impulsionada por anseios que buscam o bem e a paz interior.',meT:'Sistema de Medição',meP:'Cada fadiga é medida de 0 a 5 com 4 zonas.',bk:'← Voltar',ne:'AGULHA = DESVIO',vZ:'ZONA VIRTUDE',hE:'A agulha aponta para o centro de gravidade de todas as fadigas.',
-ft:{soberbia:{l:'Soberba',a:'Abundância',v:'Humildade'},envidia:{l:'Inveja',a:'Dignidade',v:'Bondade'},ira:{l:'Ira',a:'Justiça',v:'Paciência'},pereza:{l:'Preguiça',a:'Paz',v:'Diligência'},avaricia:{l:'Avareza',a:'Confiança',v:'Generosidade'},gula:{l:'Gula',a:'Bem-estar',v:'Temperança'},lujuria:{l:'Luxúria',a:'Comunhão',v:'Castidade'}},
-te:{soberbia:['Merece mais?','Aceita críticas?','Superior?','Reconhecimento?','Admitir erros?','Respeito?','Limites?','Destaque?','Sucesso alheio?','Protagonismo?'],envidia:['Compara-se?','Sucesso alheio?','Alegrar-se?','Injustiça?','Deseja o alheio?','Ressentimento?','Celebrar?','Merecem?','Frustração?','Inferior?'],ira:['Irrita-se?','Desproporcional?','Perdoar?','Vingança?','Controle?','Calma?','Rancor?','Injustiças?','Explode?','Ira domina?'],pereza:['Adia?','Motivação?','Conforto?','Indiferença?','Evita?','Apatia?','Amanhã?','Constância?','Entretenimento?','Tempo?'],avaricia:['Partilhar?','Ansiedade?','Acumula?','Generoso?','Adquirir?','Insegurança?','Desfazer-se?','Material?','Suficiente?','Gastar?'],gula:['Prazer imediato?','Impulsos?','Conforto?','Limites?','Moderação?','Mais?','Prazer vs bem-estar?','Dizer não?','Vazio?','Controle?'],lujuria:['Superficial?','Respeito?','Físico?','Objetifica?','Fidelidade?','Sensações?','Compromisso?','Desejo vs amor?','Vazio?','Além do físico?']},
-dl:{1:{c:'A gratidão é a memória do coração.',au:'Massillon',a:['Três coisas gratas.','Ato desinteressado.','Ouvir sem impor.']},2:{c:'Humildade é pensar menos em si.',au:'C.S. Lewis',a:['Reconhecer os outros.','3 conquistas.','Ajudar.']},3:{c:'A paciência é a força da alma.',a:['Contar até 10.','Perdoar.','Resposta serena.']},4:{c:'A generosidade nasce da confiança.',a:['Partilhar.','Dar o acumulado.','Tempo.']},5:{c:'O domínio próprio é a maior vitória.',au:'Platão',a:['Moderação.','Substituir prazer.','Jejuar.']},6:{c:'A verdadeira comunhão transcende o físico.',a:['Ouvir.','Conexão.','Caridade.']},7:{c:'A diligência transforma intenção em realidade.',a:['Tarefa adiada.','Horário 3h.','30 min.']}}},
+pt:{mo:['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'],sT:'Guia para a\nPaz Interior',sS:'Restauração da harmonia',sM:'ENTRE A AÇÃO E A CONTEMPLAÇÃO',hT:'Seu Caminho Hoje',vi:'Virtude',pc:'♪ PEÇA DO DIA',co:'CONTEMPLAÇÃO',ac:'AÇÃO DO DIA',dom:'FADIGA DOMINANTE',mTe:'Teste',mCa:'Calendário',mGa:'Medidores',mMu:'Repertório',mAl:'Alarme',mJo:'Diário',mTh:'Teoria',mHi:'Histórico',q:'Pergunta',of:'de',ye:'Anseio de',sc:[{l:'Muito fraco',d:'Quase nunca'},{l:'Leve',d:'Raramente'},{l:'Moderado',d:'Às vezes'},{l:'Forte',d:'Frequentemente'},{l:'Muito forte',d:'Constantemente'}],pa:'Painel',ta:'⊙ TACÔMETROS',cp:'✦ ROSA DOS VENTOS',cf:'Contra-fadiga',dT:'Faça o teste',st:'Iniciar',rp:'Repetir',zn:['VIRTUDE','LEVE','MODERADO','ALTO'],cT:'🧘 Contemplação',aT:'⚡ Ação',dy:'Dia',eo:'Fim do Mês',eT:'Refaça o teste.',rt:'Reajuste',al:'Alarme',re:'Lembrete',da:'Lembrete diário',to:'Peça do dia',tD:'30 seg.',pv:'PRÉ-VIS.',rf:'Sua reflexão',fa:'Fadiga',rT:'Repertório Musical',rD:'56 peças',jo:'Diário Pessoal',yR:'SUA REFLEXÃO',pl:'Escreva...',sR:'Salvar',pr:'ANTERIORES',thT:'Fundamentos',thH:'As 7 Desordens',thP:'Nossa natureza busca o bem e a paz interior.',meT:'Medição',meP:'0 a 5, 4 zonas.',bk:'← Voltar',ne:'AGULHA = DESVIO',vZ:'ZONA VIRTUDE',hE:'A agulha aponta para o centro de gravidade.',guideT:'Como Utilizar este Guia',guide:'1. <b>Comece quando quiser.</b>\n2. <b>Cada dia</b>: fadiga, contemplação, 3 ações.\n3. <b>Ouça a peça musical.</b>\n4. <b>Escreva sua reflexão.</b>\n5. <b>Fim do mês</b>: refaça o teste.\n6. <b>Consulte o histórico.</b>\n7. <b>Repetição + variação = hábitos.</b>\n8. <b>7 fadigas por semana, ordem aleatória.</b>',hiT:'Histórico',hiNone:'Sem dados.',hiMonth:'Mês',hiAreas:'A MELHORAR',hiUp:'↑ Melhorou',hiDown:'↓ Piorou',hiNew:'→ Novo',hiStable:'≈ Estável',wkT:'FADIGAS DA SEMANA',ft:{soberbia:{l:'Soberba',a:'Abundância',v:'Humildade'},envidia:{l:'Inveja',a:'Dignidade',v:'Bondade'},ira:{l:'Ira',a:'Justiça',v:'Paciência'},pereza:{l:'Preguiça',a:'Paz',v:'Diligência'},avaricia:{l:'Avareza',a:'Confiança',v:'Generosidade'},gula:{l:'Gula',a:'Bem-estar',v:'Temperança'},lujuria:{l:'Luxúria',a:'Comunhão',v:'Castidade'}},te:{soberbia:['Merece mais?','Críticas?','Superior?','Reconhecimento?','Erros?','Respeito?','Limites?','Destaque?','Sucesso alheio?','Protagonismo?'],envidia:['Compara-se?','Sucesso?','Alegrar-se?','Injustiça?','Deseja?','Ressentimento?','Celebrar?','Merecem?','Frustração?','Inferior?'],ira:['Irrita-se?','Desproporcional?','Perdoar?','Vingança?','Controle?','Calma?','Rancor?','Injustiças?','Explode?','Ira domina?'],pereza:['Adia?','Motivação?','Conforto?','Indiferença?','Evita?','Apatia?','Amanhã?','Constância?','Entretenimento?','Tempo?'],avaricia:['Partilhar?','Ansiedade?','Acumula?','Generoso?','Adquirir?','Insegurança?','Desfazer?','Material?','Suficiente?','Gastar?'],gula:['Prazer?','Impulsos?','Conforto?','Limites?','Moderação?','Mais?','Prazer vs bem-estar?','Não?','Vazio?','Controle?'],lujuria:['Superficial?','Respeito?','Físico?','Objetifica?','Fidelidade?','Sensações?','Compromisso?','Desejo vs amor?','Vazio?','Além?']},dc:{soberbia:{c:'A gratidão é a memória do coração. — Massillon',a:['Três coisas gratas.','Ato desinteressado.','Ouvir sem impor.']},envidia:{c:'Humildade é pensar menos em si. — C.S. Lewis',a:['Felicitar sinceramente.','3 conquistas.','Ajudar.']},ira:{c:'A paciência é a força da alma.',a:['Contar até 10.','Perdoar.','Resposta serena.']},pereza:{c:'A diligência transforma intenção em realidade.',a:['Tarefa adiada.','Intervalos de 25 min.','3 tarefas.']},avaricia:{c:'Mãos que dão são mais santas. — Madre Teresa',a:['Doar.','Gratidão consciente.','Partilhar sucesso.']},gula:{c:'A temperança ensina a desfrutar sem excesso. — Tomás de Aquino',a:['Comer com moderação.','Exercício.','Gratidão pela saúde.']},lujuria:{c:'A verdadeira comunhão transcende o físico.',a:['Ouvir profundamente.','Conexão emocional.','Caridade.']}}},
 
-it:{mo:['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'],sT:'Guida alla\nPace Interiore',sS:'Restauro dell\'armonia\ntra anima e corpo',sM:'TRA L\'AZIONE E LA CONTEMPLAZIONE',hT:'Il Tuo Cammino Oggi',vi:'Virtù',pc:'♪ BRANO DEL GIORNO',co:'CONTEMPLAZIONE',ac:'AZIONE DEL GIORNO',dom:'FATICA DOMINANTE',mTe:'Test di\nFatica',mCa:'Calendario\nAnnuale',mGa:'I Miei\nIndicatori',mMu:'Repertorio\nMusicale',mAl:'Sveglia\nGiornaliera',mJo:'Diario\nPersonale',mTh:'Teoria',q:'Domanda',of:'di',ye:'Anelito di',sc:[{l:'Molto debole',d:'Quasi mai'},{l:'Lieve',d:'Raramente'},{l:'Moderato',d:'A volte'},{l:'Forte',d:'Spesso'},{l:'Molto forte',d:'Costantemente'}],pa:'Quadro Strumenti',ta:'⊙ TACHIMETRI',cp:'✦ ROSA DEI VENTI',cf:'Contro-fatica',dT:'Fai il test',st:'Inizia',rp:'Ripeti Test',zn:['VIRTÙ','LIEVE','MODERATO','ALTO'],cT:'🧘 Contemplazione',aT:'⚡ Azione',dy:'Giorno',eo:'Fine Mese',eT:'Rifai il test.',rt:'Ricalibrazione',al:'Sveglia Giornaliera',re:'Configura promemoria',da:'Promemoria',to:'Brano del giorno',tD:'30 sec.',pv:'ANTEPRIMA',rf:'La tua riflessione',fa:'Fatica',rT:'Repertorio Musicale',rD:'56 brani · 8 per fatica',jo:'Diario Personale',yR:'LA TUA RIFLESSIONE',pl:'Scrivi la tua riflessione...',sR:'Salva',pr:'PRECEDENTI',thT:'Fondamenti Teorici',thH:'I 7 Disordini della Natura Umana',thP:'La nostra natura è animata da aneliti che cercano il bene e la pace interiore.',meT:'Sistema di Misurazione',meP:'Ogni fatica è misurata da 0 a 5 con 4 zone.',bk:'← Indietro',ne:'AGO = DERIVA',vZ:'ZONA VIRTÙ',hE:'L\'ago rosso punta verso il centro di gravità di tutte le fatiche.',
-ft:{soberbia:{l:'Superbia',a:'Abbondanza',v:'Umiltà'},envidia:{l:'Invidia',a:'Dignità',v:'Gentilezza'},ira:{l:'Ira',a:'Giustizia',v:'Pazienza'},pereza:{l:'Accidia',a:'Pace',v:'Diligenza'},avaricia:{l:'Avarizia',a:'Fiducia',v:'Generosità'},gula:{l:'Gola',a:'Benessere',v:'Temperanza'},lujuria:{l:'Lussuria',a:'Comunione',v:'Castità'}},
-te:{soberbia:['Meriti più?','Critiche?','Superiore?','Riconoscimento?','Errori?','Rispetto?','Limiti?','Eccellere?','Successo altrui?','Riflettori?'],envidia:['Ti confronti?','Successo?','Gioire?','Ingiusto?','Desideri?','Risentimento?','Celebrare?','Meritano?','Frustrazione?','Inferiore?'],ira:['Irritabile?','Sproporzionato?','Perdonare?','Vendetta?','Controllo?','Calma?','Rancore?','Ingiustizie?','Esplodi?','Ira domina?'],pereza:['Rimandi?','Motivazione?','Comodità?','Indifferenza?','Eviti?','Apatia?','Domani?','Costanza?','Intrattenimento?','Sprechi?'],avaricia:['Condividere?','Ansia?','Accumuli?','Generoso?','Acquisire?','Insicurezza?','Separarti?','Materiale?','Abbastanza?','Spendere?'],gula:['Piacere immediato?','Impulsi?','Cibo-conforto?','Limiti?','Moderazione?','Sempre più?','Piacere vs benessere?','Dire no?','Vuoto?','Controllo?'],lujuria:['Superficiale?','Rispetto?','Fisico?','Oggettivare?','Fedeltà?','Sensazioni?','Impegno?','Desiderio vs amore?','Vuoto dopo?','Oltre il fisico?']},
-dl:{1:{c:'La gratitudine è la memoria del cuore.',au:'Massillon',a:['Tre cose grate.','Gesto disinteressato.','Ascoltare.']},2:{c:'L\'umiltà è pensare meno a sé.',au:'C.S. Lewis',a:['Riconoscere.','3 traguardi.','Aiutare.']},3:{c:'La pazienza è la forza dell\'anima.',a:['Contare fino a 10.','Perdonare.','Risposta serena.']},4:{c:'La generosità nasce dalla fiducia.',a:['Condividere.','Donare.','Tempo.']},5:{c:'Il dominio di sé è la più grande vittoria.',au:'Platone',a:['Moderazione.','Sostituire.','Digiuno.']},6:{c:'La vera comunione trascende il fisico.',a:['Ascoltare.','Connessione.','Carità.']},7:{c:'La diligenza trasforma l\'intenzione in realtà.',a:['Compito rimandato.','Programma 3h.','30 min.']}}},
+it:{mo:['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'],sT:'Guida alla\nPace Interiore',sS:'Restauro dell\'armonia',sM:'TRA L\'AZIONE E LA CONTEMPLAZIONE',hT:'Il Tuo Cammino Oggi',vi:'Virtù',pc:'♪ BRANO DEL GIORNO',co:'CONTEMPLAZIONE',ac:'AZIONE DEL GIORNO',dom:'FATICA DOMINANTE',mTe:'Test',mCa:'Calendario',mGa:'Indicatori',mMu:'Repertorio',mAl:'Sveglia',mJo:'Diario',mTh:'Teoria',mHi:'Storico',q:'Domanda',of:'di',ye:'Anelito di',sc:[{l:'Molto debole',d:'Quasi mai'},{l:'Lieve',d:'Raramente'},{l:'Moderato',d:'A volte'},{l:'Forte',d:'Spesso'},{l:'Molto forte',d:'Costantemente'}],pa:'Quadro Strumenti',ta:'⊙ TACHIMETRI',cp:'✦ ROSA DEI VENTI',cf:'Contro-fatica',dT:'Fai il test',st:'Inizia',rp:'Ripeti',zn:['VIRTÙ','LIEVE','MODERATO','ALTO'],cT:'🧘 Contemplazione',aT:'⚡ Azione',dy:'Giorno',eo:'Fine Mese',eT:'Rifai il test.',rt:'Ricalibrazione',al:'Sveglia',re:'Promemoria',da:'Promemoria',to:'Brano del giorno',tD:'30 sec.',pv:'ANTEPRIMA',rf:'La tua riflessione',fa:'Fatica',rT:'Repertorio Musicale',rD:'56 brani',jo:'Diario Personale',yR:'RIFLESSIONE',pl:'Scrivi...',sR:'Salva',pr:'PRECEDENTI',thT:'Fondamenti',thH:'I 7 Disordini',thP:'La nostra natura cerca il bene e la pace interiore.',meT:'Misurazione',meP:'0 a 5, 4 zone.',bk:'← Indietro',ne:'AGO = DERIVA',vZ:'ZONA VIRTÙ',hE:'L\'ago punta verso il centro di gravità.',guideT:'Come Utilizzare questa Guida',guide:'1. <b>Inizia quando vuoi.</b>\n2. <b>Ogni giorno</b>: fatica, contemplazione, 3 azioni.\n3. <b>Ascolta il brano musicale.</b>\n4. <b>Scrivi la tua riflessione.</b>\n5. <b>Fine mese</b>: rifai il test.\n6. <b>Consulta lo storico.</b>\n7. <b>Ripetizione + variazione = abitudini.</b>\n8. <b>7 fatiche a settimana, ordine casuale.</b>',hiT:'Storico',hiNone:'Nessun dato.',hiMonth:'Mese',hiAreas:'DA MIGLIORARE',hiUp:'↑ Migliorato',hiDown:'↓ Peggiorato',hiNew:'→ Nuovo',hiStable:'≈ Stabile',wkT:'FATICHE DELLA SETTIMANA',ft:{soberbia:{l:'Superbia',a:'Abbondanza',v:'Umiltà'},envidia:{l:'Invidia',a:'Dignità',v:'Gentilezza'},ira:{l:'Ira',a:'Giustizia',v:'Pazienza'},pereza:{l:'Accidia',a:'Pace',v:'Diligenza'},avaricia:{l:'Avarizia',a:'Fiducia',v:'Generosità'},gula:{l:'Gola',a:'Benessere',v:'Temperanza'},lujuria:{l:'Lussuria',a:'Comunione',v:'Castità'}},te:{soberbia:['Meriti più?','Critiche?','Superiore?','Riconoscimento?','Errori?','Rispetto?','Limiti?','Eccellere?','Successo altrui?','Riflettori?'],envidia:['Confronti?','Successo?','Gioire?','Ingiusto?','Desideri?','Risentimento?','Celebrare?','Meritano?','Frustrazione?','Inferiore?'],ira:['Irritabile?','Sproporzionato?','Perdonare?','Vendetta?','Controllo?','Calma?','Rancore?','Ingiustizie?','Esplodi?','Ira domina?'],pereza:['Rimandi?','Motivazione?','Comodità?','Indifferenza?','Eviti?','Apatia?','Domani?','Costanza?','Intrattenimento?','Sprechi?'],avaricia:['Condividere?','Ansia?','Accumuli?','Generoso?','Acquisire?','Insicurezza?','Separarti?','Materiale?','Abbastanza?','Spendere?'],gula:['Piacere?','Impulsi?','Conforto?','Limiti?','Moderazione?','Più?','Benessere?','No?','Vuoto?','Controllo?'],lujuria:['Superficiale?','Rispetto?','Fisico?','Oggettivare?','Fedeltà?','Sensazioni?','Impegno?','Amore?','Vuoto?','Oltre?']},dc:{soberbia:{c:'La gratitudine è la memoria del cuore. — Massillon',a:['Tre cose grate.','Gesto disinteressato.','Ascoltare.']},envidia:{c:'L\'umiltà è pensare meno a sé. — C.S. Lewis',a:['Congratulare.','3 traguardi.','Aiutare.']},ira:{c:'La pazienza è la forza dell\'anima.',a:['Contare a 10.','Perdonare.','Risposta serena.']},pereza:{c:'La diligenza trasforma l\'intenzione.',a:['Compito rimandato.','Intervalli 25 min.','3 compiti.']},avaricia:{c:'Le mani che danno sono più sante. — Madre Teresa',a:['Donare.','Gratitudine.','Condividere.']},gula:{c:'La temperanza insegna a godere senza eccesso. — Tommaso d\'Aquino',a:['Mangiare con moderazione.','Esercizio.','Gratitudine salute.']},lujuria:{c:'La vera comunione trascende il fisico.',a:['Ascoltare profondamente.','Connessione emotiva.','Carità.']}}},
 
-de:{mo:['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'],sT:'Leitfaden zum\nInneren Frieden',sS:'Wiederherstellung der Harmonie\nzwischen Seele und Körper',sM:'ZWISCHEN HANDELN UND KONTEMPLATION',hT:'Dein Weg Heute',vi:'Tugend',pc:'♪ STÜCK DES TAGES',co:'KONTEMPLATION',ac:'AKTION DES TAGES',dom:'DOMINANTE ERMÜDUNG',mTe:'Ermüdungs-\ntest',mCa:'Jahres-\nkalender',mGa:'Meine\nAnzeigen',mMu:'Musik-\nrepertoire',mAl:'Täglicher\nWecker',mJo:'Persönliches\nTagebuch',mTh:'Theorie',q:'Frage',of:'von',ye:'Sehnsucht nach',sc:[{l:'Sehr schwach',d:'Fast nie'},{l:'Leicht',d:'Selten'},{l:'Mäßig',d:'Manchmal'},{l:'Stark',d:'Häufig'},{l:'Sehr stark',d:'Ständig'}],pa:'Instrumententafel',ta:'⊙ TACHOMETER',cp:'✦ WINDROSE',cf:'Gegen-Ermüdung',dT:'Machen Sie den Test',st:'Starten',rp:'Wiederholen',zn:['TUGEND','LEICHT','MÄSSIG','HOCH'],cT:'🧘 Kontemplation',aT:'⚡ Aktion',dy:'Tag',eo:'Monatsende',eT:'Neujustierungstest.',rt:'Neujustierung',al:'Täglicher Wecker',re:'Erinnerung konfigurieren',da:'Tägliche Erinnerung',to:'Stück des Tages',tD:'30 Sek.',pv:'VORSCHAU',rf:'Ihre Reflexion',fa:'Ermüdung',rT:'Musikrepertoire',rD:'56 Stücke · 8 pro Ermüdung',jo:'Persönliches Tagebuch',yR:'IHRE REFLEXION',pl:'Ihre Reflexion schreiben...',sR:'Speichern',pr:'FRÜHERE EINTRÄGE',thT:'Theoretische Grundlagen',thH:'Die 7 Störungen der Menschlichen Natur',thP:'Unsere Natur wird von Sehnsüchten angetrieben, die das Gute und den inneren Frieden suchen.',meT:'Messsystem',meP:'Jede Ermüdung wird von 0 bis 5 mit 4 Zonen gemessen.',bk:'← Zurück',ne:'NADEL = ABDRIFT',vZ:'TUGENDZONE',hE:'Die rote Nadel zeigt auf den Schwerpunkt aller Ermüdungen.',
-ft:{soberbia:{l:'Hochmut',a:'Fülle',v:'Demut'},envidia:{l:'Neid',a:'Würde',v:'Güte'},ira:{l:'Zorn',a:'Gerechtigkeit',v:'Geduld'},pereza:{l:'Trägheit',a:'Frieden',v:'Fleiß'},avaricia:{l:'Geiz',a:'Vertrauen',v:'Großzügigkeit'},gula:{l:'Völlerei',a:'Wohlbefinden',v:'Mäßigung'},lujuria:{l:'Wollust',a:'Gemeinschaft',v:'Keuschheit'}},
-te:{soberbia:['Mehr verdient?','Kritik?','Überlegen?','Anerkennung?','Fehler?','Respekt?','Grenzen?','Glänzen?','Erfolg anderer?','Rampenlicht?'],envidia:['Vergleichen?','Erfolg anderer?','Freude?','Ungerecht?','Wünschen?','Groll?','Feiern?','Verdienen?','Frustration?','Unterlegen?'],ira:['Gereizt?','Unverhältnismäßig?','Vergeben?','Rache?','Kontrolle?','Ruhe?','Groll?','Ungerechtigkeiten?','Explodieren?','Zorn dominiert?'],pereza:['Aufschieben?','Motivation?','Bequemlichkeit?','Gleichgültigkeit?','Vermeiden?','Apathie?','Morgen?','Beständigkeit?','Unterhaltung?','Zeit?'],avaricia:['Teilen?','Verlustangst?','Horten?','Großzügig?','Erwerben?','Unsicherheit?','Loslassen?','Materiell?','Genug?','Ausgeben?'],gula:['Sofortiges Vergnügen?','Impulse?','Essen als Trost?','Grenzen?','Mäßigung?','Immer mehr?','Genuss vs Wohlbefinden?','Nein sagen?','Leere?','Kontrolle?'],lujuria:['Oberflächlich?','Respekt?','Physisch?','Objektivieren?','Treue?','Reize?','Engagement?','Begierde vs Liebe?','Leer danach?','Jenseits?']},
-dl:{1:{c:'Dankbarkeit ist das Gedächtnis des Herzens.',au:'Massillon',a:['Drei dankbare Dinge.','Selbstlose Tat.','Zuhören.']},2:{c:'Demut heißt weniger an sich denken.',au:'C.S. Lewis',a:['Andere anerkennen.','3 Erfolge.','Helfen.']},3:{c:'Geduld ist die Stärke der Seele.',a:['Bis 10 zählen.','Vergeben.','Gelassene Antwort.']},4:{c:'Großzügigkeit entsteht aus Vertrauen.',a:['Teilen.','Weitergeben.','Zeit investieren.']},5:{c:'Selbstbeherrschung ist der größte Sieg.',au:'Platon',a:['Mäßigung.','Vergnügen ersetzen.','Fasten.']},6:{c:'Wahre Gemeinschaft geht über das Physische hinaus.',a:['Tief zuhören.','Verbindung.','Nächstenliebe.']},7:{c:'Fleiß verwandelt Absicht in Wirklichkeit.',a:['Aufgabe erledigen.','3-Stunden-Plan.','30 Minuten.']}}}
+de:{mo:['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'],sT:'Leitfaden zum\nInneren Frieden',sS:'Wiederherstellung der Harmonie',sM:'ZWISCHEN HANDELN UND KONTEMPLATION',hT:'Dein Weg Heute',vi:'Tugend',pc:'♪ STÜCK DES TAGES',co:'KONTEMPLATION',ac:'AKTION DES TAGES',dom:'DOMINANTE ERMÜDUNG',mTe:'Test',mCa:'Kalender',mGa:'Anzeigen',mMu:'Repertoire',mAl:'Wecker',mJo:'Tagebuch',mTh:'Theorie',mHi:'Verlauf',q:'Frage',of:'von',ye:'Sehnsucht nach',sc:[{l:'Sehr schwach',d:'Fast nie'},{l:'Leicht',d:'Selten'},{l:'Mäßig',d:'Manchmal'},{l:'Stark',d:'Häufig'},{l:'Sehr stark',d:'Ständig'}],pa:'Instrumententafel',ta:'⊙ TACHOMETER',cp:'✦ WINDROSE',cf:'Gegen-Ermüdung',dT:'Machen Sie den Test',st:'Starten',rp:'Wiederholen',zn:['TUGEND','LEICHT','MÄSSIG','HOCH'],cT:'🧘 Kontemplation',aT:'⚡ Aktion',dy:'Tag',eo:'Monatsende',eT:'Neujustierungstest.',rt:'Neujustierung',al:'Wecker',re:'Erinnerung',da:'Tägliche Erinnerung',to:'Stück des Tages',tD:'30 Sek.',pv:'VORSCHAU',rf:'Ihre Reflexion',fa:'Ermüdung',rT:'Musikrepertoire',rD:'56 Stücke',jo:'Tagebuch',yR:'REFLEXION',pl:'Schreiben...',sR:'Speichern',pr:'FRÜHERE',thT:'Grundlagen',thH:'Die 7 Störungen',thP:'Unsere Natur sucht das Gute und den inneren Frieden.',meT:'Messung',meP:'0 bis 5, 4 Zonen.',bk:'← Zurück',ne:'NADEL = ABDRIFT',vZ:'TUGENDZONE',hE:'Die Nadel zeigt auf den Schwerpunkt.',guideT:'Anleitung',guide:'1. <b>Jederzeit beginnen.</b>\n2. <b>Jeden Tag</b>: Ermüdung, Kontemplation, 3 Aktionen.\n3. <b>Musikstück hören.</b>\n4. <b>Reflexion schreiben.</b>\n5. <b>Monatsende</b>: Test wiederholen.\n6. <b>Verlauf prüfen.</b>\n7. <b>Wiederholung + Variation = Gewohnheiten.</b>\n8. <b>7 Ermüdungen pro Woche, zufällige Reihenfolge.</b>',hiT:'Verlauf',hiNone:'Keine Daten.',hiMonth:'Monat',hiAreas:'ZU VERBESSERN',hiUp:'↑ Verbessert',hiDown:'↓ Verschlechtert',hiNew:'→ Neu',hiStable:'≈ Stabil',wkT:'ERMÜDUNGEN DER WOCHE',ft:{soberbia:{l:'Hochmut',a:'Fülle',v:'Demut'},envidia:{l:'Neid',a:'Würde',v:'Güte'},ira:{l:'Zorn',a:'Gerechtigkeit',v:'Geduld'},pereza:{l:'Trägheit',a:'Frieden',v:'Fleiß'},avaricia:{l:'Geiz',a:'Vertrauen',v:'Großzügigkeit'},gula:{l:'Völlerei',a:'Wohlbefinden',v:'Mäßigung'},lujuria:{l:'Wollust',a:'Gemeinschaft',v:'Keuschheit'}},te:{soberbia:['Mehr verdient?','Kritik?','Überlegen?','Anerkennung?','Fehler?','Respekt?','Grenzen?','Glänzen?','Erfolg?','Rampenlicht?'],envidia:['Vergleichen?','Erfolg?','Freude?','Ungerecht?','Wünschen?','Groll?','Feiern?','Verdienen?','Frustration?','Unterlegen?'],ira:['Gereizt?','Unverhältnismäßig?','Vergeben?','Rache?','Kontrolle?','Ruhe?','Groll?','Ungerechtigkeiten?','Explodieren?','Zorn?'],pereza:['Aufschieben?','Motivation?','Bequemlichkeit?','Gleichgültigkeit?','Vermeiden?','Apathie?','Morgen?','Beständigkeit?','Unterhaltung?','Zeit?'],avaricia:['Teilen?','Verlustangst?','Horten?','Großzügig?','Erwerben?','Unsicherheit?','Loslassen?','Materiell?','Genug?','Ausgeben?'],gula:['Vergnügen?','Impulse?','Trost?','Grenzen?','Mäßigung?','Mehr?','Wohlbefinden?','Nein?','Leere?','Kontrolle?'],lujuria:['Oberflächlich?','Respekt?','Physisch?','Objektivieren?','Treue?','Reize?','Engagement?','Liebe?','Leer?','Jenseits?']},dc:{soberbia:{c:'Dankbarkeit ist das Gedächtnis des Herzens. — Massillon',a:['Drei dankbare Dinge.','Selbstlose Tat.','Zuhören.']},envidia:{c:'Demut heißt weniger an sich denken. — C.S. Lewis',a:['Aufrichtig gratulieren.','3 Erfolge.','Helfen.']},ira:{c:'Geduld ist die Stärke der Seele.',a:['Bis 10 zählen.','Vergeben.','Gelassene Antwort.']},pereza:{c:'Fleiß verwandelt Absicht in Wirklichkeit.',a:['Aufgabe erledigen.','25-Min-Intervalle.','3 Aufgaben.']},avaricia:{c:'Gebende Hände sind heiliger. — Mutter Teresa',a:['Spenden.','Bewusste Dankbarkeit.','Erfolg teilen.']},gula:{c:'Mäßigung lehrt genießen ohne Übermaß. — Thomas von Aquin',a:['Bewusst essen.','Bewegung.','Gesundheit danken.']},lujuria:{c:'Wahre Gemeinschaft geht über das Physische hinaus.',a:['Tief zuhören.','Emotionale Verbindung.','Nächstenliebe.']}}}
 };
 
-// ═══════════════════════════════════════════════════════════════
-// APP STATE
-// ═══════════════════════════════════════════════════════════════
+// ═══ STATE ═══
 const S={scr:'splash',lang:localStorage.getItem('pi_lang')||navigator.language?.substring(0,2)||'es',
 ans:{},res:null,fI:0,qI:0,sM:new Date().getMonth(),sD:new Date().getDate(),jr:'',jrs:JSON.parse(localStorage.getItem('pi_jrs')||'{}'),
-tab:'c',gv:'panel',plat:localStorage.getItem('pi_plat')||'spotify',alOn:false,alTime:'08:00'};
+tab:'c',gv:'panel',plat:localStorage.getItem('pi_plat')||'spotify',alOn:false,alTime:'08:00',
+history:JSON.parse(localStorage.getItem('pi_hist')||'[]')};
 if(!I[S.lang])S.lang='es';
+try{const sr=localStorage.getItem('pi_res');if(sr)S.res=JSON.parse(sr);}catch(e){}
 
-function fl(id){const b=F.find(f=>f.id===id);const l=(I[S.lang]||I.es).ft[id]||{};return{...b,...l};}
+function fl(id){const b=F.find(f=>f.id===id);const t=I[S.lang]||I.es;const l=t.ft[id]||{};return{...b,...l};}
 
-function render(){
-const t=I[S.lang]||I.es;
-const now=new Date(),doy=Math.floor((now-new Date(now.getFullYear(),0,0))/864e5);
-const fId=CY[doy%7],fat=fl(fId),mI=Math.floor((doy-1)/7)%8,piece=MU[fId][mI];
-const dc=t.dl[now.getDate()]||t.dl[((now.getDate()-1)%7)+1]||t.dl[1];
-const loc=S.lang==='es'?'es-ES':S.lang==='fr'?'fr-FR':S.lang==='pt'?'pt-BR':S.lang==='it'?'it-IT':S.lang==='de'?'de-DE':'en-US';
-const a=document.getElementById('app');
-
-// ═══ SPLASH ═══
-if(S.scr==='splash'){
-a.innerHTML=`<div class="splash"><div style="font-size:10px;color:var(--accentL);letter-spacing:4px">✦</div>
-<h1>${t.sT}</h1><div class="line"></div><div class="sub">${t.sS}</div>
-<div class="motto">${t.sM}</div><div class="copy">© FRANCISCO REQUENA PAREDES · AMDG</div></div>`;
-setTimeout(()=>{S.scr='home';render();},2200);return;}
-
-// ═══ HOME ═══
-if(S.scr==='home'){
-const dateStr=now.toLocaleDateString(loc,{weekday:'long',day:'numeric',month:'long'});
-const mShort=t.mo[now.getMonth()].substring(0,3).toUpperCase();
-let domH='';
-if(S.res){const sorted=Object.entries(S.res).sort((a,b)=>b[1]-a[1]);if(sorted[0]){const df=fl(sorted[0][0]);domH=`<div class="card" style="text-align:center;margin-top:12px"><div style="font-size:10px;color:var(--textL);letter-spacing:1px">${t.dom}</div><div style="font-size:14px;font-weight:700;color:var(--textM)">${df.l}</div></div>`;}}
-a.innerHTML=`<div class="page">
-<div class="flags">${LN.map(l=>`<button class="flag${S.lang===l.code?' on':''}" onclick="cL('${l.code}')">${l.flag}</button>`).join('')}</div>
-<div style="text-align:center;margin-bottom:12px"><div style="font-size:10px;color:var(--textL);letter-spacing:2px;text-transform:uppercase">${dateStr}</div><div style="font-size:22px;font-weight:700;color:var(--text);margin-top:2px">${t.hT}</div></div>
-<div style="text-align:center;margin-bottom:10px"><span class="pill" style="color:${fat.color};background:${fat.color}15">${fat.l.toUpperCase()} · ${t.vi}: ${fat.v}</span></div>
-<div class="card" style="border-left:3px solid ${fat.color};padding:12px"><div style="display:flex;justify-content:space-between;align-items:center">
-<div style="flex:1;margin-right:10px"><div style="font-size:8px;letter-spacing:2px;color:var(--textL);text-transform:uppercase">${t.pc} — ${fat.v}</div><div style="font-size:14px;font-weight:700;color:var(--text);margin-top:2px">${piece.t}</div><div style="font-size:11px;color:var(--textL)">${piece.c} · ${piece.d}</div></div>
-<button onclick="oM('${fId}',${mI})" style="width:44px;height:44px;border-radius:22px;background:${fat.color};border:none;color:#FFF;font-size:18px;cursor:pointer">▶</button></div>
-<div style="display:flex;gap:4px;margin-top:8px">${['spotify','apple'].map(p=>`<button class="platbtn" onclick="sP('${p}')" style="border:1px solid ${S.plat===p?fat.color:'var(--border)'};background:${S.plat===p?fat.color+'12':'transparent'};color:${S.plat===p?fat.color:'var(--textL)'}">${p==='spotify'?'🟢 Spotify':'🍎 Apple Music'}</button>`).join('')}</div></div>
-<div class="card"><div style="font-size:8px;letter-spacing:2px;color:var(--textL)">───  ${t.co}  ───</div><div style="font-size:15px;font-style:italic;color:var(--text);line-height:1.5;margin:6px 0">"${dc.c}"</div>${dc.au?`<div style="font-size:10px;color:var(--textL)">— ${dc.au}</div>`:''}</div>
-<div class="card"><div style="font-size:8px;letter-spacing:2px;color:var(--textL);margin-bottom:6px">───  ${t.ac}  ───</div>${dc.a.map((x,i)=>`<div style="display:flex;gap:8px;margin-bottom:8px;align-items:flex-start"><div style="width:20px;height:20px;border-radius:10px;background:${fat.color}15;display:flex;justify-content:center;align-items:center;flex-shrink:0"><span style="font-size:11px;font-weight:700;color:${fat.color}">${i+1}</span></div><span style="font-size:12px;color:var(--textM);line-height:1.4">${x}</span></div>`).join('')}</div>
-<div class="grid3">
-<button class="card" onclick="go('test')"><span class="menicon">📋</span><div class="menlbl">${t.mTe}</div></button>
-<button class="card" onclick="go('calendar')"><div class="calicon"><div class="top"><span>${mShort}</span></div><span class="num">${now.getDate()}</span></div><div class="menlbl">${t.mCa}</div></button>
-<button class="card" onclick="go('results')"><span class="menicon">📊</span><div class="menlbl">${t.mGa}</div></button>
-<button class="card" onclick="go('repertoire')"><span class="menicon">🎵</span><div class="menlbl">${t.mMu}</div></button>
-<button class="card" onclick="go('alarm')"><span class="menicon">⏰</span><div class="menlbl">${t.mAl}</div></button>
-<button class="card" onclick="go('journal')"><span class="menicon">📝</span><div class="menlbl">${t.mJo}</div></button>
-<button class="card" onclick="go('theory')"><span class="menicon">📖</span><div class="menlbl">${t.mTh}</div></button>
-</div>${domH}<div style="height:20px"></div></div>`;return;}
-
-// ═══ TEST ═══
-if(S.scr==='test'){
-const fi=F[S.fI],fat=fl(fi.id),pregs=t.te[fi.id]||[],total=70,cur=S.fI*10+S.qI+1,ak=`${fi.id}_${S.qI}`;
-a.innerHTML=`<div class="page"><button class="back" onclick="S.fI=0;S.qI=0;go('home')">${t.bk}</button>
-<div style="height:4px;background:var(--border);border-radius:2px;margin-bottom:4px;overflow:hidden"><div style="height:100%;width:${(cur/total)*100}%;background:${fat.color};border-radius:2px"></div></div>
-<div style="font-size:10px;color:var(--textL);text-align:center;margin-bottom:4px">${t.q} ${cur} ${t.of} ${total}</div>
-<div style="text-align:center;margin-bottom:12px"><span class="pill" style="color:${fat.color};background:${fat.color}18">${fat.l.toUpperCase()} — ${t.ye} ${fat.a}</span></div>
-<div class="card" style="padding:20px;text-align:center"><span style="font-size:16px;color:var(--text);line-height:1.5">${pregs[S.qI]}</span></div>
-<div class="opts">${t.sc.map((o,i)=>{const v=i+1;return`<button class="opt${S.ans[ak]===v?' on':''}" style="${S.ans[ak]===v?'border-color:'+fat.color+';background:'+fat.color+'18':''}" onclick="ans(${v})"><span style="font-weight:700;color:${fat.color};margin-right:10px;font-size:16px;width:24px">${v}</span><div><div style="font-weight:600;font-size:13px;color:var(--textM)">${o.l}</div><div style="font-size:10px;color:var(--textL)">${o.d}</div></div></button>`;}).join('')}</div></div>`;return;}
-
-// ═══ RESULTS ═══
-if(S.scr==='results'){
-const res=S.res||{};
-const sorted=Object.entries(res).sort((a,b)=>b[1]-a[1]);
-const domF=sorted[0]?.[0]?fl(sorted[0][0]):null;
-let gauges='';
-if(S.gv==='panel'){
-gauges='<div style="display:flex;flex-wrap:wrap;justify-content:center">';
-F.forEach(f=>{const lf=fl(f.id);gauges+=mkGauge(res[f.id]||0,lf.l,lf.a,f.color,120,t.zn);});
-gauges+='</div>';
-}else{gauges=mkCompass(res,280,t);}
-let domH='';
-if(domF&&sorted[0][1]>0)domH=`<div class="card" style="text-align:center;border:1px solid ${domF.color}33"><div style="font-size:8px;color:var(--textL);letter-spacing:2px">${t.dom}</div><div style="font-size:20px;font-weight:700;color:${domF.color}">${domF.l}</div><div style="font-size:11px;color:var(--textM);margin-top:4px">${t.ye} ${domF.a}</div><div style="font-size:10px;color:var(--textL)">${t.cf}: <span style="color:var(--virtue);font-weight:700">${domF.v}</span></div></div>`;
-a.innerHTML=`<div class="page"><button class="back" onclick="go('home')">${t.bk}</button>
-<div class="title">${t.pa}</div>
-<div class="tabs"><button class="tab${S.gv==='panel'?' on':' off'}" onclick="S.gv='panel';render()">${t.ta}</button><button class="tab${S.gv==='compass'?' on':' off'}" onclick="S.gv='compass';render()">${t.cp}</button></div>
-${gauges}${domH}
-${!S.res?`<div style="text-align:center;margin-top:16px"><div style="font-size:12px;color:var(--textL);margin-bottom:12px">${t.dT}</div><button class="btn" onclick="go('test')">${t.st}</button></div>`
-:`<button class="btn" style="margin-top:12px" onclick="S.ans={};S.fI=0;S.qI=0;go('test')">${t.rp}</button>`}
-<div style="display:flex;justify-content:center;gap:8px;margin-top:12px;flex-wrap:wrap">${[{c:'#D4C5A9',l:t.zn[0]},{c:'#48BB78',l:t.zn[1]},{c:'#ECC94B',l:t.zn[2]},{c:'#E53E3E',l:t.zn[3]}].map(z=>`<span style="font-size:7px;color:var(--textL);display:flex;align-items:center;gap:3px"><span style="width:12px;height:4px;background:${z.c};border-radius:1px;display:inline-block"></span>${z.l}</span>`).join('')}</div></div>`;return;}
-
-// ═══ CALENDAR ═══
-if(S.scr==='calendar'){
-const dias=DM[S.sM];const dc2=t.dl[S.sD]||t.dl[((S.sD-1)%7)+1]||t.dl[1];
-a.innerHTML=`<div class="page"><button class="back" onclick="go('home')">${t.bk}</button><div class="title">${t.mo[S.sM]}</div>
-<div class="months-scroll">${t.mo.map((m,i)=>`<button class="mchip${S.sM===i?' on':' off'}" onclick="S.sM=${i};S.sD=1;render()">${m.substring(0,3)}</button>`).join('')}</div>
-<div class="grid7">${Array.from({length:dias},(_,i)=>i+1).map(d=>{const has=S.jrs[`${S.sM}_${d}`];return`<button class="daybtn${S.sD===d?' sel':''}${has&&S.sD!==d?' has':''}" onclick="S.sD=${d};render()">${d}${has&&S.sD!==d?'<span class="dot"></span>':''}</button>`;}).join('')}</div>
-<div class="tabs"><button class="tab${S.tab==='c'?' on':' off'}" onclick="S.tab='c';render()">${t.cT}</button><button class="tab${S.tab==='a'?' on':' off'}" onclick="S.tab='a';render()">${t.aT}</button></div>
-<div class="card"><div style="font-size:10px;letter-spacing:2px;color:var(--textL);text-transform:uppercase;margin-bottom:6px">${t.dy} ${S.sD} — ${t.mo[S.sM]}</div>
-${S.tab==='c'?`<div style="font-size:14px;font-style:italic;color:var(--textM);line-height:1.5">"${dc2.c}"</div>`
-:`<div>${dc2.a.map((x,i)=>`<div style="font-size:13px;color:var(--textM);line-height:1.5;margin-bottom:4px">${i+1}. ${x}</div>`).join('')}</div>`}</div>
-${S.sD===dias?`<div class="card" style="border:1px solid var(--gold)"><div style="font-size:11px;font-weight:700;color:var(--gold);margin-bottom:4px">📊 ${t.eo}</div><div style="font-size:11px;color:var(--textM)">${t.eT}</div><button class="btn" style="margin-top:8px" onclick="S.ans={};S.fI=0;S.qI=0;go('test')">${t.rt}</button></div>`:''}</div>`;return;}
-
-// ═══ ALARM ═══
-if(S.scr==='alarm'){
-a.innerHTML=`<div class="page"><button class="back" onclick="go('home')">${t.bk}</button><div class="title">${t.al}</div><div style="font-size:11px;color:var(--textL);text-align:center;margin-bottom:20px">${t.re}</div>
-<div class="card"><div style="font-size:48px;text-align:center;margin-bottom:12px">⏰</div>
-<input type="time" value="${S.alTime}" onchange="S.alTime=this.value" style="font-size:32px;font-weight:700;text-align:center;color:var(--text);background:var(--borderL);padding:8px;border-radius:8px;border:none;width:100%">
-<div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:8px"><span style="font-size:12px;color:var(--textM)">${t.da}</span>
-<button class="switch" style="background:${S.alOn?'var(--accent)':'var(--border)'}" onclick="S.alOn=!S.alOn;render()"><span class="knob" style="left:${S.alOn?'27px':'3px'}"></span></button></div>
-<div style="display:flex;justify-content:space-between;align-items:center;padding-top:8px;border-top:1px solid var(--border);margin-top:8px"><div><div style="font-size:12px;color:var(--textM)">${t.to}</div><div style="font-size:10px;color:var(--textL)">${t.tD}</div></div></div>
-${S.alOn?`<div style="margin-top:12px;padding:10px;background:var(--borderL);border-radius:8px"><div style="font-size:9px;letter-spacing:2px;color:var(--textL);margin-bottom:6px">${t.pv}</div>
-<div style="background:var(--card);border-radius:8px;padding:10px;border:1px solid var(--border)"><div style="font-size:12px;font-weight:700;color:var(--text)">${t.rf}</div><div style="font-size:10px;color:var(--textM)">${t.fa}: ${fat.l} · ${t.vi}: ${fat.v}</div>
-<div style="display:flex;align-items:center;gap:6px;margin-top:6px;padding:5px;background:${fat.color}08;border-radius:6px"><div style="width:26px;height:26px;border-radius:13px;background:${fat.color};display:flex;justify-content:center;align-items:center;color:#FFF;font-size:11px">♪</div><div><div style="font-size:10px;font-weight:600;color:var(--text)">${piece.t}</div><div style="font-size:9px;color:var(--textL)">${piece.c} · 0:30</div></div></div></div></div>`:''}</div></div>`;return;}
-
-// ═══ REPERTOIRE ═══
-if(S.scr==='repertoire'){
-a.innerHTML=`<div class="page"><button class="back" onclick="go('home')">${t.bk}</button><div class="title">${t.rT}</div><div style="font-size:11px;color:var(--textL);text-align:center;margin-bottom:10px">${t.rD}</div>
-<div style="display:flex;gap:6px;margin-bottom:12px">${['spotify','apple'].map(p=>`<button class="platbtn" onclick="sP('${p}')" style="border:1.5px solid ${S.plat===p?'var(--accent)':'var(--border)'};background:${S.plat===p?'var(--accent)':'transparent'};color:${S.plat===p?'#FFF':'var(--textL)'}">${p==='spotify'?'🟢 Spotify':'🍎 Apple Music'}</button>`).join('')}</div>
-${F.map(f=>{const lf=fl(f.id);const pcs=MU[f.id];return`<div class="repgrp"><div class="rephdr" style="border-bottom:2px solid ${f.color};background:${f.color}10"><span style="font-size:12px;font-weight:700;color:${f.color}">${lf.l}</span><span style="font-size:9px;color:var(--textL)">${t.vi}: ${lf.v}</span></div>
-<div class="repbody">${pcs.map((p,i)=>`<div class="reprow" onclick="oM('${f.id}',${i})" style="${i<pcs.length-1?'border-bottom:1px solid var(--border)':''}"><div class="repplay" style="background:${f.color}">▶</div><div><div style="font-size:11px;font-weight:600;color:var(--text)">${p.t}</div><div style="font-size:9px;color:var(--textL)">${p.c} · ${p.d}</div></div></div>`).join('')}</div></div>`;}).join('')}</div>`;return;}
-
-// ═══ JOURNAL ═══
-if(S.scr==='journal'){
-const entries=Object.entries(S.jrs).slice(-5).reverse();
-a.innerHTML=`<div class="page"><button class="back" onclick="go('home')">${t.bk}</button><div class="title">${t.jo}</div><div style="font-size:11px;color:var(--textL);text-align:center;margin-bottom:16px">${t.dy} ${S.sD} — ${t.mo[S.sM]}</div>
-<div class="card"><div style="font-size:10px;letter-spacing:2px;color:var(--textL);margin-bottom:8px">${t.yR}</div>
-<textarea id="jrtx" placeholder="${t.pl}">${S.jr}</textarea>
-<button class="btn" style="margin-top:8px" onclick="svJ()">${t.sR}</button></div>
-${entries.length?`<div style="margin-top:16px"><div style="font-size:10px;font-weight:700;color:var(--textL);letter-spacing:1px;margin-bottom:8px">${t.pr}</div>${entries.map(([k,tx])=>{const[m,d]=k.split('_');return`<div style="padding:10px;background:var(--cardAlt);border-radius:8px;border:1px solid var(--border);margin-bottom:6px"><div style="font-size:9px;color:var(--textL)">${d} — ${t.mo[parseInt(m)]}</div><div style="font-size:11px;color:var(--textM);margin-top:4px;line-height:1.4">${tx}</div></div>`;}).join('')}</div>`:''}</div>`;return;}
-
-// ═══ THEORY ═══
-if(S.scr==='theory'){
-a.innerHTML=`<div class="page"><button class="back" onclick="go('home')">${t.bk}</button><div class="title">${t.thT}</div>
-<div class="card"><div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:8px">${t.thH}</div><div style="font-size:12px;color:var(--textM);line-height:1.6;margin-bottom:8px">${t.thP}</div>
-${F.map((f,i)=>{const lf=fl(f.id);return`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;${i>0?'border-top:1px solid var(--border)':''}"><span style="width:8px;height:8px;border-radius:4px;background:${f.color};flex-shrink:0"></span><div><div style="font-size:11px"><span style="font-weight:700;color:${f.color}">${lf.l}</span> <span style="color:var(--textL)">— ${t.ye} ${lf.a}</span></div><div style="font-size:10px;color:var(--textM)">${t.cf}: ${lf.v}</div></div></div>`;}).join('')}</div>
-<div class="card"><div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:8px">${t.meT}</div><div style="font-size:12px;color:var(--textM);line-height:1.6">${t.meP}</div>
-<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">${[{c:'#D4C5A9',l:t.zn[0]+' (0-1.25)'},{c:'#48BB78',l:t.zn[1]+' (1.25-2.5)'},{c:'#ECC94B',l:t.zn[2]+' (2.5-3.75)'},{c:'#E53E3E',l:t.zn[3]+' (3.75-5)'}].map(z=>`<span style="display:flex;align-items:center;gap:4px"><span style="width:16px;height:8px;background:${z.c};border-radius:2px;display:inline-block"></span><span style="font-size:9px;color:var(--textM)">${z.l}</span></span>`).join('')}</div></div></div>`;return;}
+function saveHistory(res){
+  const now=new Date();
+  const key=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const entry={key,date:now.toISOString(),results:{...res}};
+  S.history=S.history.filter(h=>h.key!==key);
+  S.history.push(entry);
+  S.history.sort((a,b)=>a.key.localeCompare(b.key));
+  localStorage.setItem('pi_hist',JSON.stringify(S.history));
 }
 
-// ═══════════════════════════════════════════════════════════════
-// SVG GAUGE BUILDER
-// ═══════════════════════════════════════════════════════════════
+// ═══ MUSIC OPEN ═══
+function oM(fid,idx){const p=MU[fid][idx];const q=encodeURIComponent(p.t+' '+p.c);
+const urls={spotify:`https://open.spotify.com/search/${q}`,apple:`https://music.apple.com/search?term=${q}`,youtube:`https://music.youtube.com/search?q=${q}`};
+window.open(urls[S.plat]||urls.spotify,'_blank');}
+
+// ═══ SVG GAUGE ═══
 function mkGauge(val,label,sub,color,sz,zn){
 const cx=sz/2,cy=sz/2,r=sz/2-12,SA=-225,EA=45,ARC=EA-SA;
 const v2a=n=>SA+(n/5)*ARC;
@@ -289,24 +198,10 @@ let ticks='';for(let i=0;i<=50;i++){const a2=SA+(i/50)*ARC,mj=i%10===0,ir=mj?r-1
 let nums='';[0,1,2,3,4,5].forEach(n=>{const ps=p(v2a(n),r-22);nums+=`<text x="${ps.x}" y="${ps.y}" text-anchor="middle" dominant-baseline="central" font-size="8" font-weight="700" fill="#5C4A32">${n}</text>`;});
 const zl=val<=1.25?zn[0]:val<=2.5?zn[1]:val<=3.75?zn[2]:zn[3];
 const zc=val<=1.25?'#8B7355':val<=2.5?'#48BB78':val<=3.75?'#D69E2E':'#E53E3E';
-return`<div style="text-align:center;margin:4px"><svg width="${sz}" height="${sz*.82}" viewBox="0 0 ${sz} ${sz*.82}">
-<circle cx="${cx}" cy="${cy}" r="${r+6}" fill="none" stroke="#5C4A32" stroke-width="2.5"/>
-<circle cx="${cx}" cy="${cy}" r="${r+2}" fill="#FDFBF7"/>
-${zones.map(z=>`<path d="${arc(v2a(z.f),v2a(z.t),r-3)}" fill="none" stroke="${z.c}" stroke-width="8" opacity="0.85"/>`).join('')}
-${ticks}${nums}
-<polygon points="${tip.x},${tip.y} ${b1.x},${b1.y} ${tail.x},${tail.y} ${b2.x},${b2.y}" fill="#C0392B"/>
-<circle cx="${cx}" cy="${cy}" r="6" fill="#5C4A32" stroke="#C4A66A" stroke-width="1.5"/>
-<circle cx="${cx}" cy="${cy}" r="3" fill="#FAF6EF"/>
-<rect x="${cx-18}" y="${cy+14}" width="36" height="14" rx="2" fill="#F5EFE4" stroke="#D4C5A9" stroke-width="0.5"/>
-<text x="${cx}" y="${cy+23}" text-anchor="middle" font-size="9" font-weight="700" fill="${zc}">${val.toFixed(1)}</text></svg>
-<div style="font-size:10px;font-weight:800;color:${color};letter-spacing:1px;text-transform:uppercase">${label}</div>
-<div style="font-size:8px;color:#8B7355;letter-spacing:2px">${sub}</div>
-<span style="font-size:7px;font-weight:700;color:${zc};background:${zc}18;border:1px solid ${zc}33;border-radius:3px;padding:1px 6px">${zl}</span></div>`;
+return`<div style="text-align:center;margin:4px"><svg width="${sz}" height="${sz*.82}" viewBox="0 0 ${sz} ${sz*.82}"><circle cx="${cx}" cy="${cy}" r="${r+6}" fill="none" stroke="#5C4A32" stroke-width="2.5"/><circle cx="${cx}" cy="${cy}" r="${r+2}" fill="#FDFBF7"/>${zones.map(z=>`<path d="${arc(v2a(z.f),v2a(z.t),r-3)}" fill="none" stroke="${z.c}" stroke-width="8" opacity="0.85"/>`).join('')}${ticks}${nums}<polygon points="${tip.x},${tip.y} ${b1.x},${b1.y} ${tail.x},${tail.y} ${b2.x},${b2.y}" fill="#C0392B"/><circle cx="${cx}" cy="${cy}" r="6" fill="#5C4A32" stroke="#C4A66A" stroke-width="1.5"/><circle cx="${cx}" cy="${cy}" r="3" fill="#FAF6EF"/><rect x="${cx-18}" y="${cy+14}" width="36" height="14" rx="2" fill="#F5EFE4" stroke="#D4C5A9" stroke-width="0.5"/><text x="${cx}" y="${cy+23}" text-anchor="middle" font-size="9" font-weight="700" fill="${zc}">${val.toFixed(1)}</text></svg><div style="font-size:10px;font-weight:800;color:${color};letter-spacing:1px;text-transform:uppercase">${label}</div><div style="font-size:8px;color:#8B7355;letter-spacing:2px">${sub}</div><span style="font-size:7px;font-weight:700;color:${zc};background:${zc}18;border:1px solid ${zc}33;border-radius:3px;padding:1px 6px">${zl}</span></div>`;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// SVG COMPASS BUILDER
-// ═══════════════════════════════════════════════════════════════
+// ═══ SVG COMPASS ═══
 function mkCompass(res,sz,t){
 const cx=sz/2,cy=sz/2,outerR=sz/2-35,innerR=22;
 const pc=(d,rd)=>({x:cx+rd*Math.cos((d-90)*Math.PI/180),y:cy+rd*Math.sin((d-90)*Math.PI/180)});
@@ -316,52 +211,187 @@ let sx=0,sy=0;pts.forEach(p=>{const r2=((p.angle-90)*Math.PI)/180;sx+=p.val*Math
 const hD=(Math.atan2(sy,sx)*180/Math.PI+90+360)%360,hM=Math.sqrt(sx*sx+sy*sy);
 const nL=Math.min(Math.max(hM*6,35),outerR*.85),nT=pc(hD,nL),nLt=pc(hD+90,6),nRt=pc(hD-90,6);
 let rings='';[1,2,3,4,5].forEach(v=>{const rr=innerR+(v/5)*(outerR-innerR);rings+=`<circle cx="${cx}" cy="${cy}" r="${rr}" fill="none" stroke="#E8DFD0" stroke-width="0.5" ${v<5?'stroke-dasharray="2 4"':''}/>`;});
-let axes='';F.forEach((f,i)=>{const ou=pc(f.angle,outerR+1),inn=pc(f.angle,innerR),lb=pc(f.angle,outerR+22);const lf=fl(f.id);
-axes+=`<line x1="${inn.x}" y1="${inn.y}" x2="${ou.x}" y2="${ou.y}" stroke="${f.color}" stroke-width="0.6" opacity="0.3"/>
-<text x="${lb.x}" y="${lb.y}" text-anchor="middle" dominant-baseline="central" font-size="8" font-weight="800" fill="${f.color}">${(lf.l||f.id).toUpperCase()}</text>`;
-if(pts[i].val>0)axes+=`<circle cx="${pts[i].pos.x}" cy="${pts[i].pos.y}" r="4.5" fill="${f.color}" stroke="#FDFBF7" stroke-width="1.5"/>`;});
+let axes='';F.forEach((f,i)=>{const ou=pc(f.angle,outerR+1),inn=pc(f.angle,innerR),lb=pc(f.angle,outerR+22);const lf=fl(f.id);axes+=`<line x1="${inn.x}" y1="${inn.y}" x2="${ou.x}" y2="${ou.y}" stroke="${f.color}" stroke-width="0.6" opacity="0.3"/><text x="${lb.x}" y="${lb.y}" text-anchor="middle" dominant-baseline="central" font-size="8" font-weight="800" fill="${f.color}">${(lf.l||f.id).toUpperCase()}</text>`;if(pts[i].val>0)axes+=`<circle cx="${pts[i].pos.x}" cy="${pts[i].pos.y}" r="4.5" fill="${f.color}" stroke="#FDFBF7" stroke-width="1.5"/>`;});
 const poly=pts.map(p=>`${p.pos.x},${p.pos.y}`).join(' ');
 const needle=hM>0.5?`<polygon points="${nT.x},${nT.y} ${nLt.x},${nLt.y} ${cx},${cy} ${nRt.x},${nRt.y}" fill="#C0392B" opacity="0.9"/>`:'';
-return`<div style="text-align:center"><svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}">
-<circle cx="${cx}" cy="${cy}" r="${sz/2-3}" fill="none" stroke="#5C4A32" stroke-width="3"/>
-<circle cx="${cx}" cy="${cy}" r="${sz/2-6}" fill="#FDFBF7" stroke="#C4A66A" stroke-width="1"/>
-${rings}${axes}
-<polygon points="${poly}" fill="${(dom.color||'#C0392B')}15" stroke="${dom.color||'#C0392B'}" stroke-width="1.5" stroke-linejoin="round"/>
-${needle}
-<circle cx="${cx}" cy="${cy}" r="10" fill="#5C4A32" stroke="#C4A66A" stroke-width="2"/>
-<circle cx="${cx}" cy="${cy}" r="5" fill="#FAF6EF" stroke="#8B7355" stroke-width="1"/>
-<circle cx="${cx}" cy="${cy}" r="2" fill="#5C4A32"/>
-</svg>
-<div style="display:flex;gap:12px;justify-content:center;margin-top:4px;flex-wrap:wrap">
-<span style="font-size:9px;display:flex;align-items:center;gap:4px"><span style="width:14px;height:5px;background:#C0392B;border-radius:1px;display:inline-block"></span>${t.ne}</span>
-<span style="font-size:9px;display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:5px;border:1.5px solid #48BB78;opacity:.5;display:inline-block"></span>${t.vZ}</span></div>
-<p style="font-size:10px;color:var(--textM);margin:8px auto;max-width:280px;line-height:1.5">${t.hE}</p></div>`;
+return`<div style="text-align:center"><svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}"><circle cx="${cx}" cy="${cy}" r="${sz/2-3}" fill="none" stroke="#5C4A32" stroke-width="3"/><circle cx="${cx}" cy="${cy}" r="${sz/2-6}" fill="#FDFBF7" stroke="#C4A66A" stroke-width="1"/>${rings}${axes}<polygon points="${poly}" fill="${(dom.color||'#C0392B')}15" stroke="${dom.color||'#C0392B'}" stroke-width="1.5" stroke-linejoin="round"/>${needle}<circle cx="${cx}" cy="${cy}" r="10" fill="#5C4A32" stroke="#C4A66A" stroke-width="2"/><circle cx="${cx}" cy="${cy}" r="5" fill="#FAF6EF" stroke="#8B7355" stroke-width="1"/><circle cx="${cx}" cy="${cy}" r="2" fill="#5C4A32"/></svg><div style="display:flex;gap:12px;justify-content:center;margin-top:4px"><span style="font-size:9px;display:flex;align-items:center;gap:4px"><span style="width:14px;height:5px;background:#C0392B;border-radius:1px;display:inline-block"></span>${t.ne}</span><span style="font-size:9px;display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:5px;border:1.5px solid #48BB78;opacity:.5;display:inline-block"></span>${t.vZ}</span></div><p style="font-size:10px;color:var(--textM);margin:8px auto;max-width:280px;line-height:1.5">${t.hE}</p></div>`;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// ACTIONS
-// ═══════════════════════════════════════════════════════════════
-function go(s){S.scr=s;render();}
+// ═══ RENDER ═══
+function render(){
+const t=I[S.lang]||I.es;
+const now=new Date();
+const fat=getFatigaForDate(now);const fatLoc=fl(fat.id);
+const piece=getMusicForDate(now,fat.id);
+const dc=t.dc[fat.id];
+const weekOrder=getWeekOrder(now);
+const loc=S.lang==='es'?'es-ES':S.lang==='fr'?'fr-FR':S.lang==='pt'?'pt-BR':S.lang==='it'?'it-IT':S.lang==='de'?'de-DE':'en-US';
+const a=document.getElementById('app');
+
+// ═══ SPLASH ═══
+if(S.scr==='splash'){a.innerHTML=`<div class="splash"><div style="font-size:10px;color:var(--accentL);letter-spacing:4px">✦</div><h1>${t.sT}</h1><div class="line"></div><div class="sub">${t.sS}</div><div style="font-size:9px;color:var(--textMu);letter-spacing:3px;margin-top:12px">${t.sM}</div><div class="copy" style="font-size:8px;color:var(--textMu);margin-top:24px">© FRANCISCO REQUENA PAREDES · AMDG</div></div>`;setTimeout(()=>{S.scr='home';render();},2200);return;}
+
+// ═══ HOME ═══
+if(S.scr==='home'){
+const dateStr=now.toLocaleDateString(loc,{weekday:'long',day:'numeric',month:'long'});
+const mShort=t.mo[now.getMonth()].substring(0,3).toUpperCase();
+let domH='';if(S.res){const sorted=Object.entries(S.res).sort((a,b)=>b[1]-a[1]);if(sorted[0]){const df=fl(sorted[0][0]);domH=`<div class="card" style="text-align:center;margin-top:12px"><div style="font-size:10px;color:var(--textL);letter-spacing:1px">${t.dom}</div><div style="font-size:14px;font-weight:700;color:var(--textM)">${df.l}</div></div>`;}}
+a.innerHTML=`<div class="page">
+<div class="flags">${LN.map(l=>`<button class="flag${S.lang===l.code?' on':''}" onclick="cL('${l.code}')">${l.flag}</button>`).join('')}</div>
+<div style="text-align:center;margin-bottom:12px"><div style="font-size:10px;color:var(--textL);letter-spacing:2px;text-transform:uppercase">${dateStr}</div><div style="font-size:22px;font-weight:700;color:var(--text);margin-top:2px">${t.hT}</div></div>
+<div style="text-align:center;margin-bottom:10px"><span class="pill" style="color:${fat.color};background:${fat.color}15">${fatLoc.l.toUpperCase()} · ${t.vi}: ${fatLoc.v}</span></div>
+<!-- Music -->
+<div class="card" style="border-left:3px solid ${fat.color};padding:12px">
+<div style="display:flex;justify-content:space-between;align-items:center">
+<div style="flex:1;margin-right:10px"><div style="font-size:8px;letter-spacing:2px;color:var(--textL);text-transform:uppercase">${t.pc} — ${fatLoc.v}</div><div style="font-size:14px;font-weight:700;color:var(--text);margin-top:2px">${piece.t}</div><div style="font-size:11px;color:var(--textL)">${piece.c} · ${piece.d}</div></div>
+<button onclick="oM('${fat.id}',${Math.floor((Math.floor((now-new Date(now.getFullYear(),0,0))/864e5)-1)/7)%8})" style="width:44px;height:44px;border-radius:22px;background:${fat.color};border:none;color:#FFF;font-size:18px;cursor:pointer">▶</button></div>
+<div style="display:flex;gap:4px;margin-top:8px">${['spotify','apple','youtube'].map(p=>`<button class="platbtn" onclick="sP('${p}')" style="border-color:${S.plat===p?fat.color:'var(--border)'};background:${S.plat===p?fat.color+'12':'transparent'};color:${S.plat===p?fat.color:'var(--textL)'}">${p==='spotify'?'🟢 Spotify':p==='apple'?'🍎 Apple':'🔴 YouTube'}</button>`).join('')}</div></div>
+<!-- Contemplation -->
+<div class="card"><div style="font-size:8px;letter-spacing:2px;color:var(--textL)">───  ${t.co}  ───</div><div style="font-size:15px;font-style:italic;color:var(--text);line-height:1.5;margin:6px 0">"${dc.c}"</div></div>
+<!-- Actions -->
+<div class="card"><div style="font-size:8px;letter-spacing:2px;color:var(--textL);margin-bottom:6px">───  ${t.ac}  ───</div>${dc.a.map((x,i)=>`<div style="display:flex;gap:8px;margin-bottom:8px;align-items:flex-start"><div style="width:20px;height:20px;border-radius:10px;background:${fat.color}15;display:flex;justify-content:center;align-items:center;flex-shrink:0"><span style="font-size:11px;font-weight:700;color:${fat.color}">${i+1}</span></div><span style="font-size:12px;color:var(--textM);line-height:1.4">${x}</span></div>`).join('')}</div>
+<!-- Week preview -->
+<div class="card"><div style="font-size:8px;letter-spacing:2px;color:var(--textL);margin-bottom:6px">${t.wkT}</div>
+<div style="display:flex;gap:3px;flex-wrap:wrap">${weekOrder.map((wf,i)=>{const wfl=fl(wf.id);const isToday=wf.id===fat.id;return`<span style="font-size:8px;font-weight:${isToday?'800':'500'};color:${isToday?wf.color:'var(--textL)'};background:${isToday?wf.color+'15':'var(--borderL)'};padding:2px 6px;border-radius:4px;border:${isToday?'1px solid '+wf.color:'1px solid transparent'}">${wfl.l}</span>`;}).join('')}</div></div>
+<!-- Menu -->
+<div class="grid3">
+<button class="card" onclick="go('test')"><span class="menicon">📋</span><div class="menlbl">${t.mTe}</div></button>
+<button class="card" onclick="go('calendar')"><div class="calicon"><div class="top"><span>${mShort}</span></div><span class="num">${now.getDate()}</span></div><div class="menlbl">${t.mCa}</div></button>
+<button class="card" onclick="go('results')"><span class="menicon">📊</span><div class="menlbl">${t.mGa}</div></button>
+<button class="card" onclick="go('repertoire')"><span class="menicon">🎵</span><div class="menlbl">${t.mMu}</div></button>
+<button class="card" onclick="go('alarm')"><span class="menicon">⏰</span><div class="menlbl">${t.mAl}</div></button>
+<button class="card" onclick="go('journal')"><span class="menicon">📝</span><div class="menlbl">${t.mJo}</div></button>
+<button class="card" onclick="go('theory')"><span class="menicon">📖</span><div class="menlbl">${t.mTh}</div></button>
+<button class="card" onclick="go('history')"><span class="menicon">📈</span><div class="menlbl">${t.mHi}</div></button>
+</div>${domH}<div style="height:20px"></div></div>`;return;}
+
+// ═══ TEST ═══
+if(S.scr==='test'){
+const fi=F[S.fI],fatT=fl(fi.id),pregs=t.te[fi.id]||[],total=70,cur=S.fI*10+S.qI+1,ak=`${fi.id}_${S.qI}`;
+a.innerHTML=`<div class="page"><button class="back" onclick="S.fI=0;S.qI=0;go('home')">${t.bk}</button>
+<div style="height:4px;background:var(--border);border-radius:2px;margin-bottom:4px;overflow:hidden"><div style="height:100%;width:${(cur/total)*100}%;background:${fatT.color};border-radius:2px"></div></div>
+<div style="font-size:10px;color:var(--textL);text-align:center;margin-bottom:4px">${t.q} ${cur} ${t.of} ${total}</div>
+<div style="text-align:center;margin-bottom:12px"><span class="pill" style="color:${fatT.color};background:${fatT.color}18">${fatT.l?.toUpperCase()} — ${t.ye} ${fatT.a}</span></div>
+<div class="card" style="padding:20px;text-align:center"><span style="font-size:16px;color:var(--text);line-height:1.5">${pregs[S.qI]}</span></div>
+<div class="opts">${t.sc.map((o,i)=>{const v=i+1;return`<button class="opt" style="${S.ans[ak]===v?'border-color:'+fatT.color+';background:'+fatT.color+'18':''}" onclick="ans(${v})"><span style="font-weight:700;color:${fatT.color};margin-right:10px;font-size:16px;width:24px">${v}</span><div><div style="font-weight:600;font-size:13px;color:var(--textM)">${o.l}</div><div style="font-size:10px;color:var(--textL)">${o.d}</div></div></button>`;}).join('')}</div></div>`;return;}
+
+// ═══ RESULTS ═══
+if(S.scr==='results'){
+const res=S.res||{};const sorted=Object.entries(res).sort((a,b)=>b[1]-a[1]);const domF=sorted[0]?.[0]?fl(sorted[0][0]):null;
+let gauges='';if(S.gv==='panel'){gauges='<div style="display:flex;flex-wrap:wrap;justify-content:center">';F.forEach(f=>{const lf=fl(f.id);gauges+=mkGauge(res[f.id]||0,lf.l,lf.a,f.color,120,t.zn);});gauges+='</div>';}else{gauges=mkCompass(res,280,t);}
+let domH='';if(domF&&sorted[0][1]>0)domH=`<div class="card" style="text-align:center;border:1px solid ${domF.color}33"><div style="font-size:8px;color:var(--textL);letter-spacing:2px">${t.dom}</div><div style="font-size:20px;font-weight:700;color:${domF.color}">${domF.l}</div><div style="font-size:11px;color:var(--textM);margin-top:4px">${t.ye} ${domF.a}</div><div style="font-size:10px;color:var(--textL)">${t.cf}: <span style="color:var(--virtue);font-weight:700">${domF.v}</span></div></div>`;
+a.innerHTML=`<div class="page"><button class="back" onclick="go('home')">${t.bk}</button><div class="title">${t.pa}</div>
+<div class="tabs"><button class="tab${S.gv==='panel'?' on':' off'}" onclick="S.gv='panel';render()">${t.ta}</button><button class="tab${S.gv==='compass'?' on':' off'}" onclick="S.gv='compass';render()">${t.cp}</button></div>
+${gauges}${domH}
+${!S.res?`<div style="text-align:center;margin-top:16px"><div style="font-size:12px;color:var(--textL);margin-bottom:12px">${t.dT}</div><button class="btn" onclick="go('test')">${t.st}</button></div>`:`<button class="btn" style="margin-top:12px" onclick="S.ans={};S.fI=0;S.qI=0;go('test')">${t.rp}</button>`}
+<div style="display:flex;justify-content:center;gap:8px;margin-top:12px;flex-wrap:wrap">${[{c:'#D4C5A9',l:t.zn[0]},{c:'#48BB78',l:t.zn[1]},{c:'#ECC94B',l:t.zn[2]},{c:'#E53E3E',l:t.zn[3]}].map(z=>`<span style="font-size:7px;color:var(--textL);display:flex;align-items:center;gap:3px"><span style="width:12px;height:4px;background:${z.c};border-radius:1px;display:inline-block"></span>${z.l}</span>`).join('')}</div></div>`;return;}
+
+// ═══ CALENDAR ═══
+if(S.scr==='calendar'){
+const dias=DM[S.sM];
+const calDate=new Date(now.getFullYear(),S.sM,S.sD);
+const calFat=getFatigaForDate(calDate);const calFl=fl(calFat.id);const calDc=t.dc[calFat.id];
+a.innerHTML=`<div class="page"><button class="back" onclick="go('home')">${t.bk}</button><div class="title">${t.mo[S.sM]}</div>
+<div class="months-scroll">${t.mo.map((m,i)=>`<button class="mchip${S.sM===i?' on':' off'}" onclick="S.sM=${i};S.sD=1;render()">${m.substring(0,3)}</button>`).join('')}</div>
+<div class="grid7">${Array.from({length:dias},(_,i)=>i+1).map(d=>{const has=S.jrs[`${S.sM}_${d}`];return`<button class="daybtn${S.sD===d?' sel':''}${has&&S.sD!==d?' has':''}" onclick="S.sD=${d};render()">${d}${has&&S.sD!==d?'<span class="dot"></span>':''}</button>`;}).join('')}</div>
+<div style="text-align:center;margin-bottom:8px"><span class="pill" style="color:${calFat.color};background:${calFat.color}15">${calFl.l} · ${t.vi}: ${calFl.v}</span></div>
+<div class="tabs"><button class="tab${S.tab==='c'?' on':' off'}" onclick="S.tab='c';render()">${t.cT}</button><button class="tab${S.tab==='a'?' on':' off'}" onclick="S.tab='a';render()">${t.aT}</button></div>
+<div class="card"><div style="font-size:10px;letter-spacing:2px;color:var(--textL);text-transform:uppercase;margin-bottom:6px">${t.dy} ${S.sD} — ${t.mo[S.sM]}</div>
+${S.tab==='c'?`<div style="font-size:14px;font-style:italic;color:var(--textM);line-height:1.5">"${calDc.c}"</div>`:`<div>${calDc.a.map((x,i)=>`<div style="font-size:13px;color:var(--textM);line-height:1.5;margin-bottom:4px">${i+1}. ${x}</div>`).join('')}</div>`}</div>
+${S.sD===dias?`<div class="card" style="border:1px solid var(--gold)"><div style="font-size:11px;font-weight:700;color:var(--gold);margin-bottom:4px">📊 ${t.eo}</div><div style="font-size:11px;color:var(--textM)">${t.eT}</div><button class="btn" style="margin-top:8px" onclick="S.ans={};S.fI=0;S.qI=0;go('test')">${t.rt}</button></div>`:''}</div>`;return;}
+
+// ═══ ALARM ═══
+if(S.scr==='alarm'){
+a.innerHTML=`<div class="page"><button class="back" onclick="go('home')">${t.bk}</button><div class="title">${t.al}</div><div style="font-size:11px;color:var(--textL);text-align:center;margin-bottom:20px">${t.re}</div>
+<div class="card"><div style="font-size:48px;text-align:center;margin-bottom:12px">⏰</div><input type="time" value="${S.alTime}" onchange="S.alTime=this.value" style="font-size:32px;font-weight:700;text-align:center;color:var(--text);background:var(--borderL);padding:8px;border-radius:8px;border:none;width:100%">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px"><span style="font-size:12px;color:var(--textM)">${t.da}</span><button class="switch" style="background:${S.alOn?'var(--accent)':'var(--border)'}" onclick="S.alOn=!S.alOn;render()"><span class="knob" style="left:${S.alOn?'27px':'3px'}"></span></button></div>
+${S.alOn?`<div style="margin-top:12px;padding:10px;background:var(--borderL);border-radius:8px"><div style="font-size:9px;letter-spacing:2px;color:var(--textL);margin-bottom:6px">${t.pv}</div><div style="background:var(--card);border-radius:8px;padding:10px;border:1px solid var(--border)"><div style="font-size:12px;font-weight:700;color:var(--text)">${t.rf}</div><div style="font-size:10px;color:var(--textM)">${t.fa}: ${fatLoc.l} · ${t.vi}: ${fatLoc.v}</div></div></div>`:''}</div></div>`;return;}
+
+// ═══ REPERTOIRE ═══
+if(S.scr==='repertoire'){
+a.innerHTML=`<div class="page"><button class="back" onclick="go('home')">${t.bk}</button><div class="title">${t.rT}</div><div style="font-size:11px;color:var(--textL);text-align:center;margin-bottom:10px">${t.rD}</div>
+<div style="display:flex;gap:4px;margin-bottom:12px">${['spotify','apple','youtube'].map(p=>`<button class="platbtn" onclick="sP('${p}')" style="border-color:${S.plat===p?'var(--accent)':'var(--border)'};background:${S.plat===p?'var(--accent)':'transparent'};color:${S.plat===p?'#FFF':'var(--textL)'}">${p==='spotify'?'🟢 Spotify':p==='apple'?'🍎 Apple':'🔴 YouTube'}</button>`).join('')}</div>
+${F.map(f=>{const lf=fl(f.id);const pcs=MU[f.id];return`<div class="repgrp"><div class="rephdr" style="border-bottom:2px solid ${f.color};background:${f.color}10"><span style="font-size:12px;font-weight:700;color:${f.color}">${lf.l}</span><span style="font-size:9px;color:var(--textL)">${t.vi}: ${lf.v}</span></div><div class="repbody">${pcs.map((p,i)=>`<div class="reprow" onclick="oM('${f.id}',${i})" style="${i<pcs.length-1?'border-bottom:1px solid var(--border)':''}"><div class="repplay" style="background:${f.color}">▶</div><div><div style="font-size:11px;font-weight:600;color:var(--text)">${p.t}</div><div style="font-size:9px;color:var(--textL)">${p.c} · ${p.d}</div></div></div>`).join('')}</div></div>`;}).join('')}</div>`;return;}
+
+// ═══ JOURNAL ═══
+if(S.scr==='journal'){
+const entries=Object.entries(S.jrs).slice(-5).reverse();
+a.innerHTML=`<div class="page"><button class="back" onclick="go('home')">${t.bk}</button><div class="title">${t.jo}</div><div style="font-size:11px;color:var(--textL);text-align:center;margin-bottom:16px">${t.dy} ${S.sD} — ${t.mo[S.sM]}</div>
+<div class="card"><div style="font-size:10px;letter-spacing:2px;color:var(--textL);margin-bottom:8px">${t.yR}</div><textarea id="jrtx" placeholder="${t.pl}">${S.jr}</textarea><button class="btn" style="margin-top:8px" onclick="svJ()">${t.sR}</button></div>
+${entries.length?`<div style="margin-top:16px"><div style="font-size:10px;font-weight:700;color:var(--textL);letter-spacing:1px;margin-bottom:8px">${t.pr}</div>${entries.map(([k,tx])=>{const[m,d]=k.split('_');return`<div style="padding:10px;background:var(--cardAlt);border-radius:8px;border:1px solid var(--border);margin-bottom:6px"><div style="font-size:9px;color:var(--textL)">${d} — ${t.mo[parseInt(m)]}</div><div style="font-size:11px;color:var(--textM);margin-top:4px;line-height:1.4">${tx}</div></div>`;}).join('')}</div>`:''}</div>`;return;}
+
+// ═══ THEORY ═══
+if(S.scr==='theory'){
+a.innerHTML=`<div class="page"><button class="back" onclick="go('home')">${t.bk}</button><div class="title">${t.thT}</div>
+<div class="card"><div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:8px">${t.guideT}</div><div style="font-size:12px;color:var(--textM);line-height:1.7">${t.guide.replace(/\n/g,'<br>')}</div></div>
+<div class="card"><div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:8px">${t.thH}</div><div style="font-size:12px;color:var(--textM);line-height:1.6;margin-bottom:8px">${t.thP}</div>
+${F.map((f,i)=>{const lf=fl(f.id);return`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;${i>0?'border-top:1px solid var(--border)':''}"><span style="width:8px;height:8px;border-radius:4px;background:${f.color};flex-shrink:0"></span><div><div style="font-size:11px"><span style="font-weight:700;color:${f.color}">${lf.l}</span> <span style="color:var(--textL)">— ${t.ye} ${lf.a}</span></div><div style="font-size:10px;color:var(--textM)">${t.cf}: ${lf.v}</div></div></div>`;}).join('')}</div>
+<div class="card"><div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:8px">${t.meT}</div><div style="font-size:12px;color:var(--textM);line-height:1.6">${t.meP}</div>
+<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">${[{c:'#D4C5A9',l:t.zn[0]+' (0-1.25)'},{c:'#48BB78',l:t.zn[1]+' (1.25-2.5)'},{c:'#ECC94B',l:t.zn[2]+' (2.5-3.75)'},{c:'#E53E3E',l:t.zn[3]+' (3.75-5)'}].map(z=>`<span style="display:flex;align-items:center;gap:4px"><span style="width:16px;height:8px;background:${z.c};border-radius:2px;display:inline-block"></span><span style="font-size:9px;color:var(--textM)">${z.l}</span></span>`).join('')}</div></div></div>`;return;}
+
+// ═══ HISTORY ═══
+if(S.scr==='history'){
+const hist=S.history;
+let content='';
+if(hist.length===0){content=`<div style="text-align:center;margin-top:40px;color:var(--textL)">${t.hiNone}<br><br><button class="btn" style="max-width:200px;margin:0 auto" onclick="go('test')">${t.st}</button></div>`;}
+else{
+// Evolution bars per fatigue
+content+=`<div class="card">`;
+F.forEach(f=>{
+const lf=fl(f.id);
+const vals=hist.map(h=>h.results[f.id]||0);
+const last=vals[vals.length-1];
+const zc=last<=1.25?'#8B7355':last<=2.5?'#48BB78':last<=3.75?'#D69E2E':'#E53E3E';
+content+=`<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px"><span style="font-size:10px;font-weight:700;color:${f.color}">${lf.l}</span><span style="font-size:10px;font-weight:700;color:${zc}">${last.toFixed(1)}</span></div>`;
+content+=`<div class="evobar">`;
+vals.forEach(v=>{const h=Math.max(4,v/5*55);const c=v<=1.25?'#D4C5A9':v<=2.5?'#48BB78':v<=3.75?'#ECC94B':'#E53E3E';content+=`<div style="height:${h}px;background:${c}"></div>`;});
+content+=`</div></div>`;
+});
+// Month labels
+content+=`<div style="display:flex;gap:2px;margin-top:4px">${hist.map(h=>`<div style="flex:1;text-align:center;font-size:7px;color:var(--textL)">${h.key.substring(5)}</div>`).join('')}</div>`;
+content+=`</div>`;
+
+// Improvement areas (compare last two)
+if(hist.length>=2){
+const prev=hist[hist.length-2].results;
+const curr=hist[hist.length-1].results;
+content+=`<div style="font-size:10px;font-weight:700;color:var(--textL);letter-spacing:1px;margin:12px 0 8px">${t.hiAreas}</div>`;
+F.forEach(f=>{
+const lf=fl(f.id);
+const p=prev[f.id]||0,c=curr[f.id]||0;
+const diff=c-p;
+let status,icon,col;
+if(diff<-0.3){status=t.hiUp;icon='✓';col='#48BB78';}
+else if(diff>0.3){status=t.hiDown;icon='⚠';col='#E53E3E';}
+else{status=t.hiStable;icon='≈';col='#8B7355';}
+content+=`<div class="improve" style="border-color:${col};background:${col}08"><div style="display:flex;justify-content:space-between"><span style="font-size:11px;font-weight:700;color:${f.color}">${lf.l}</span><span style="font-size:10px;color:${col}">${status} (${diff>0?'+':''}${diff.toFixed(1)})</span></div><div style="font-size:10px;color:var(--textM);margin-top:2px">${diff>0.3?t.cf+': '+lf.v:diff<-0.3?'→ '+lf.v+' ✓':''}</div></div>`;
+});
+} else if(hist.length===1){
+content+=`<div style="font-size:10px;font-weight:700;color:var(--textL);letter-spacing:1px;margin:12px 0 8px">${t.hiAreas}</div>`;
+const curr=hist[0].results;
+const sorted=Object.entries(curr).sort((a,b)=>b[1]-a[1]).slice(0,3);
+sorted.forEach(([id,val])=>{
+if(val>1.25){const lf=fl(id);const f=F.find(x=>x.id===id);
+content+=`<div class="improve" style="border-color:${f.color};background:${f.color}08"><div style="display:flex;justify-content:space-between"><span style="font-size:11px;font-weight:700;color:${f.color}">${lf.l} (${val.toFixed(1)})</span><span style="font-size:10px;color:var(--textL)">${t.hiNew}</span></div><div style="font-size:10px;color:var(--textM);margin-top:2px">${t.cf}: ${lf.v}</div></div>`;}
+});
+}}
+
+a.innerHTML=`<div class="page"><button class="back" onclick="go('home')">${t.bk}</button><div class="title">${t.hiT}</div>${content}</div>`;return;}
+}
+
+// ═══ ACTIONS ═══
+function go(s){S.scr=s;window.scrollTo(0,0);render();}
 function cL(c){S.lang=c;localStorage.setItem('pi_lang',c);render();}
 function sP(p){S.plat=p;localStorage.setItem('pi_plat',p);render();}
-function oM(fid,idx){const p=MU[fid][idx];const q=encodeURIComponent(p.t+' '+p.c);
-const url=S.plat==='spotify'?`https://open.spotify.com/search/${q}`:`https://music.apple.com/search?term=${q}`;
-window.open(url,'_blank');}
 function ans(v){const ak=`${F[S.fI].id}_${S.qI}`;S.ans[ak]=v;
 setTimeout(()=>{if(S.qI<9)S.qI++;else if(S.fI<6){S.fI++;S.qI=0;}
 else{const res={};F.forEach(f=>{let sum=0;for(let i=0;i<10;i++)sum+=(S.ans[`${f.id}_${i}`]||0);res[f.id]=sum/10;});
-S.res=res;localStorage.setItem('pi_res',JSON.stringify(res));S.scr='results';}render();},200);}
-function svJ(){const tx=document.getElementById('jrtx')?.value;if(tx?.trim()){S.jrs[`${S.sM}_${S.sD}`]=tx.trim();S.jr='';
-localStorage.setItem('pi_jrs',JSON.stringify(S.jrs));render();}}
+S.res=res;localStorage.setItem('pi_res',JSON.stringify(res));saveHistory(res);S.scr='results';}render();},200);}
+function svJ(){const tx=document.getElementById('jrtx')?.value;if(tx?.trim()){S.jrs[`${S.sM}_${S.sD}`]=tx.trim();S.jr='';localStorage.setItem('pi_jrs',JSON.stringify(S.jrs));render();}}
 
-// Load saved results
-try{const sr=localStorage.getItem('pi_res');if(sr)S.res=JSON.parse(sr);}catch(e){}
-
-// Register Service Worker
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js',{scope:'./'}).catch(()=>{});}
-
-// ═══ START ═══
 window.go=go;window.cL=cL;window.sP=sP;window.oM=oM;window.ans=ans;window.svJ=svJ;
+
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js',{scope:'./'}).catch(()=>{});}
 render();
 </script>
 </body>
