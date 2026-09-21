@@ -1,4 +1,4 @@
-const CACHE = 'paz-interior-v8';
+const CACHE = 'paz-interior-v9';
 
 self.addEventListener('install', e => {
   e.waitUntil(
