@@ -522,7 +522,7 @@ ${done.q3?`<div style="font-size:11px;color:var(--textM);margin-top:4px"><b>${t.
 :`<div class="card">
 <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:12px">${t.exQ1}</div>
 <div style="display:flex;gap:8px;margin-bottom:16px">
-${[{v:'yes',l:t.exYes,c:'var(--virtue)'},{v:'partial',l:t.exPartial,c:'var(--warn)'},{v:'no',l:t.exNo,c:'var(--danger)'}].map(o=>`<button id="exq1_${o.v}" onclick="document.querySelectorAll('[id^=exq1_]').forEach(b=>b.style.background='var(--cardAlt)');document.querySelectorAll('[id^=exq1_]').forEach(b=>b.style.borderColor='var(--border)');this.style.background='${o.c}18';this.style.borderColor='${o.c}';this.dataset.val='${o.v}'" style="flex:1;padding:10px;border-radius:8px;border:1.5px solid var(--border);background:var(--cardAlt);font-size:12px;font-weight:600;color:var(--text);cursor:pointer">${o.l}</button>`).join('')}
+${[{v:'yes',l:t.exYes,c:'#48BB78'},{v:'partial',l:t.exPartial,c:'#ECC94B'},{v:'no',l:t.exNo,c:'#E53E3E'}].map(o=>`<button id="exq1_${o.v}" onclick="document.querySelectorAll('[id^=exq1_]').forEach(b=>{b.style.background='';b.style.borderColor='';b.removeAttribute('data-sel')});this.style.background='${o.c}20';this.style.borderColor='${o.c}';this.setAttribute('data-sel','${o.v}')" style="flex:1;padding:10px;border-radius:8px;border:1.5px solid var(--border);background:var(--cardAlt);font-size:12px;font-weight:600;color:var(--text);cursor:pointer">${o.l}</button>`).join('')}
 </div>
 <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:6px">${t.exQ2}</div>
 <textarea id="exq2" placeholder="${t.exPh2}" style="min-height:60px;margin-bottom:16px"></textarea>
@@ -598,7 +598,7 @@ setTimeout(()=>{if(S.qI<9)S.qI++;else if(S.fI<6){S.fI++;S.qI=0;}
 else{const res={};F.forEach(f=>{let sum=0;for(let i=0;i<10;i++)sum+=(S.ans[`${f.id}_${i}`]||0);res[f.id]=sum/10;});
 S.res=res;localStorage.setItem('pi_res',JSON.stringify(res));saveHistory(res);S.scr='results';}render();},200);}
 function svJ(){const tx=document.getElementById('jrtx')?.value;if(tx?.trim()){S.jrs[`${S.sM}_${S.sD}`]=tx.trim();S.jr='';localStorage.setItem('pi_jrs',JSON.stringify(S.jrs));render();}}
-function svEx(){const q1btns=document.querySelectorAll('[id^=exq1_]');let q1v='';q1btns.forEach(b=>{if(b.dataset.val&&b.style.borderColor!=='var(--border)')q1v=b.dataset.val;});if(!q1v){q1btns[0].style.border='2px solid var(--danger)';return;}const q2=document.getElementById('exq2')?.value||'';const q3=document.getElementById('exq3')?.value||'';const now=new Date();const exKey=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;const fat=getFatigaForDate(now);S.exams[exKey]={q1:q1v,q2:q2.trim(),q3:q3.trim(),fat:fat.id,ts:now.toISOString()};localStorage.setItem('pi_exam',JSON.stringify(S.exams));render();}
+function svEx(){const sel=document.querySelector('[id^=exq1_][data-sel]');if(!sel){document.getElementById('exq1_yes').style.border='2px solid #E53E3E';return;}const q1v=sel.getAttribute('data-sel');const q2=document.getElementById('exq2')?.value||'';const q3=document.getElementById('exq3')?.value||'';const now=new Date();const exKey=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;const fat=getFatigaForDate(now);S.exams[exKey]={q1:q1v,q2:q2.trim(),q3:q3.trim(),fat:fat.id,ts:now.toISOString()};localStorage.setItem('pi_exam',JSON.stringify(S.exams));render();}
 
 window.go=go;window.cL=cL;window.sP=sP;window.oM=oM;window.ans=ans;window.svJ=svJ;window.svEx=svEx;
 
