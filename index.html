@@ -455,9 +455,7 @@ a.innerHTML=`<div class="page"><button class="back" onclick="go('home')">${t.bk}
 <div class="grid7">${Array.from({length:dias},(_,i)=>i+1).map(d=>{const has=S.jrs[`${S.sM}_${d}`];return`<button class="daybtn${S.sD===d?' sel':''}${has&&S.sD!==d?' has':''}" onclick="S.sD=${d};render()">${d}${has&&S.sD!==d?'<span class="dot"></span>':''}</button>`;}).join('')}</div>
 <div style="text-align:center;margin-bottom:8px"><span class="pill" style="color:${calFat.color};background:${calFat.color}15">${calFl.l} · ${t.vi}: ${calFl.v}</span></div>
 <div class="tabs"><button class="tab${S.tab==='c'?' on':' off'}" onclick="S.tab='c';render()">${t.cT}</button><button class="tab${S.tab==='a'?' on':' off'}" onclick="S.tab='a';render()">${t.aT}</button></div>
-<div class="card"><div style="font-size:10px;letter-spacing:2px;color:var(--textL);text-transform:uppercase;margin-bottom:6px">${t.dy} ${S.sD} — ${t.mo[S.sM]}</div>
-${S.tab==='c'?`<div style="font-size:14px;font-style:italic;color:var(--textM);line-height:1.5">"${calDc.c}"</div>`:`<div>${calDc.a.map((x,i)=>`<div style="font-size:13px;color:var(--textM);line-height:1.5;margin-bottom:4px">${i+1}. ${x}</div>`).join('')}</div>`}</div>
-${dx.s?`<div class="card" style="border-left:3px solid ${calFat.color}">
+${S.tab==='c'?`${dx.s?`<div class="card" style="border-left:3px solid ${calFat.color}">
 <div style="font-size:9px;letter-spacing:2px;color:var(--textL);margin-bottom:6px">✝ SAGRADA ESCRITURA</div>
 <div style="font-size:12px;font-style:italic;color:var(--textM);line-height:1.5">${dx.s}</div>
 </div>`:''}
@@ -465,8 +463,9 @@ ${dx.p?`<div class="card" style="border-left:3px solid var(--accentL)">
 <div style="font-size:9px;letter-spacing:2px;color:var(--textL);margin-bottom:6px">⛪ SANTOS PADRES Y DOCTORES</div>
 <div style="font-size:12px;font-style:italic;color:var(--textM);line-height:1.5">${dx.p}</div>
 ${dx.d?`<div style="font-size:12px;font-style:italic;color:var(--textM);line-height:1.5;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">${dx.d}</div>`:''}
-</div>`:''}
-${(()=>{const cps=getPsalmForDate(calDate,calFat.id,S.lang);return cps?`<div class="card" style="border-left:3px solid ${calFat.color}"><div style="font-size:9px;letter-spacing:2px;color:var(--textL);margin-bottom:6px">✝ SALMO DEL DÍA</div><div style="font-size:12px;font-weight:700;color:${calFat.color};margin-bottom:4px">Salmo ${cps.n} · <span style="font-style:italic;font-weight:400;color:var(--textM)">${cps.t}</span></div><div style="font-size:12px;font-style:italic;color:var(--textM);line-height:1.5;margin-bottom:6px">${cps.v}</div><div style="font-size:11px;color:var(--textM);line-height:1.5;padding:8px;background:var(--borderL);border-radius:6px;font-style:italic">${cps.g}<div style="font-size:9px;color:var(--textL);margin-top:4px;font-style:normal">— García Cordero, BAC</div></div></div>`:'';})()}
+</div>`:''}`
+:`<div class="card"><div style="font-size:10px;letter-spacing:2px;color:var(--textL);text-transform:uppercase;margin-bottom:6px">${t.dy} ${S.sD} — ${t.mo[S.sM]}</div>
+${calDc.a.map((x,i)=>`<div style="font-size:13px;color:var(--textM);line-height:1.5;margin-bottom:4px">${i+1}. ${x}</div>`).join('')}</div>`}
 ${S.sD===dias?`<div class="card" style="border:1px solid var(--gold)"><div style="font-size:11px;font-weight:700;color:var(--gold);margin-bottom:4px">📊 ${t.eo}</div><div style="font-size:11px;color:var(--textM)">${t.eT}</div><button class="btn" style="margin-top:8px" onclick="S.ans={};S.fI=0;S.qI=0;go('test')">${t.rt}</button></div>`:''}</div>`;return;}
 
 // ═══ ALARM ═══
@@ -602,7 +601,7 @@ function svEx(){const sel=document.querySelector('[id^=exq1_][data-sel]');if(!se
 
 window.go=go;window.cL=cL;window.sP=sP;window.oM=oM;window.ans=ans;window.svJ=svJ;window.svEx=svEx;
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js?v=11',{scope:'./'}).then(reg=>{reg.update();reg.addEventListener('updatefound',()=>{const nw=reg.installing;if(nw)nw.addEventListener('statechange',()=>{if(nw.state==='activated'&&navigator.serviceWorker.controller)location.reload();});});}).catch(()=>{});navigator.serviceWorker.addEventListener('controllerchange',()=>{location.reload();});}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js?v=14',{scope:'./'}).then(reg=>{reg.update();reg.addEventListener('updatefound',()=>{const nw=reg.installing;if(nw)nw.addEventListener('statechange',()=>{if(nw.state==='activated'&&navigator.serviceWorker.controller)location.reload();});});}).catch(()=>{});navigator.serviceWorker.addEventListener('controllerchange',()=>{location.reload();});}
 render();
 </script>
 </body>
